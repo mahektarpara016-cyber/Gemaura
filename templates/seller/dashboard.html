@@ -1,0 +1,247 @@
+{% extends 'layout/base_seller.html' %}
+{% block title %}Dashboard - Seller Panel{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-1 text-dark fw-bold">Welcome back, {{ seller.shop_name if seller else 'Shop' }}!</h2>
+        <p class="text-muted mb-0">Here's what's happening with your store today.</p>
+    </div>
+    <div class="btn-group" role="group">
+        <a href="?filter=today" class="btn btn-sm {% if filter_type == 'today' %}btn-gold{% else %}btn-outline-gold{% endif %}">Today</a>
+        <a href="?filter=week" class="btn btn-sm {% if filter_type == 'week' %}btn-gold{% else %}btn-outline-gold{% endif %}">This Week</a>
+        <a href="?filter=month" class="btn btn-sm {% if filter_type == 'month' or not filter_type %}btn-gold{% else %}btn-outline-gold{% endif %}">This Month</a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon gold">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-details">
+                <p>Total Sales</p>
+                <h3>₹{{ "{:,.0f}".format(total_sales or 0) }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="stat-details">
+                <p>Earnings</p>
+                <h3>₹{{ "{:,.0f}".format(seller_earnings or 0) }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon red">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-details">
+                <p>Loss (Cancellations)</p>
+                <h3>₹{{ "{:,.0f}".format(total_loss or 0) }}</h3>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-details">
+                <p>Net Earnings</p>
+                <h3>₹{{ "{:,.0f}".format(net_earnings or 0) }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-lg-8">
+        <div class="seller-card h-100">
+            <div class="seller-card-header">
+                <h3 class="seller-card-title">Earnings Overview</h3>
+            </div>
+            <div class="seller-card-body">
+                <div style="height: 300px;">
+                    <canvas id="earningsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4">
+        <div class="seller-card h-100">
+            <div class="seller-card-header">
+                <h3 class="seller-card-title">Sales vs Loss</h3>
+            </div>
+            <div class="seller-card-body">
+                <div style="height: 300px;">
+                    <canvas id="salesLossChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tables Row -->
+<div class="row g-4">
+    <div class="col-12 col-xl-8">
+        <div class="seller-card h-100">
+            <div class="seller-card-header d-flex justify-content-between align-items-center">
+                <h3 class="seller-card-title">Recent Orders</h3>
+                <a href="{{ url_for('seller.orders') }}" class="btn btn-sm btn-outline-gold">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="seller-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Status</th>
+                            <th>Earnings</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if order_details %}
+                            {% for detail in order_details[:5] %}
+                            <tr>
+                                <td class="fw-semibold text-dark">{{ detail.product_name }}</td>
+                                <td>{{ detail.quantity }}</td>
+                                <td>
+                                    <span class="badge-status badge-{{ detail.status|lower }}">{{ detail.status }}</span>
+                                </td>
+                                <td class="text-success fw-bold">+₹{{ "{:,.0f}".format(detail.earnings) }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">No recent orders found.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-xl-4">
+        <div class="seller-card h-100">
+            <div class="seller-card-header">
+                <h3 class="seller-card-title">Top Products</h3>
+            </div>
+            <div class="seller-card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% if top_products %}
+                        {% for tp in top_products %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3 border-bottom-0" style="border-bottom: 1px solid var(--seller-border) !important;">
+                            <div>
+                                <h6 class="mb-0 text-dark fw-semibold" style="font-size: 14px;">{{ tp.name }}</h6>
+                            </div>
+                            <span class="badge bg-light text-dark rounded-pill border">{{ tp.total_sold }} sold</span>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="list-group-item text-center text-muted py-4 border-0">No product sales yet.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden data for charts -->
+<div id="sellerChartData" 
+     data-labels="{{ chart_labels|tojson|safe }}" 
+     data-profit="{{ chart_profit|tojson|safe }}"
+     style="display:none;"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Chart options
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, padding: 20, font: { family: 'Inter', size: 12 } }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f3f5' }, border: { display: false } },
+                x: { grid: { display: false }, border: { display: false } }
+            }
+        };
+
+        // Earnings Chart
+        const chartDataEl = document.getElementById('sellerChartData');
+        const labels = JSON.parse(chartDataEl.dataset.labels || '[]');
+        const profitData = JSON.parse(chartDataEl.dataset.profit || '[]');
+        
+        if (labels.length > 0) {
+            const ctxEarnings = document.getElementById('earningsChart').getContext('2d');
+            new Chart(ctxEarnings, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Earnings (₹)',
+                        data: profitData,
+                        borderColor: '#D4AF37',
+                        backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#D4AF37',
+                        pointRadius: 4
+                    }]
+                },
+                options: commonOptions
+            });
+        }
+
+        // Sales vs Loss Chart
+        const ctxSalesLoss = document.getElementById('salesLossChart').getContext('2d');
+        new Chart(ctxSalesLoss, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sales (₹)', 'Loss (₹)'],
+                datasets: [{
+                    data: [{{ total_sales or 0 }}, {{ total_loss or 0 }}],
+                    backgroundColor: ['#D4AF37', '#e74c3c'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, padding: 20, font: { family: 'Inter', size: 12 } }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    });
+</script>
+{% endblock %}

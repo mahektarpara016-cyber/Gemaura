@@ -1,0 +1,126 @@
+{% extends 'layout/base_seller.html' %}
+
+{% block title %}My Products - Seller Panel{% endblock %}
+{% block page_title %}My Products{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-1 text-dark fw-bold">Manage Products</h2>
+        <p class="text-muted mb-0">View, edit, or add new products to your store.</p>
+    </div>
+    <a href="{{ url_for('seller.add_product') }}" class="btn btn-gold">
+        <i class="fas fa-plus me-2"></i>Add Product
+    </a>
+</div>
+
+<div class="seller-card">
+    <div class="seller-card-body">
+        <!-- Search & Filter bar -->
+        <form method="GET" action="{{ url_for('seller.products') }}" class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Search by name..." value="{{ request.args.get('search', '') }}">
+                </div>
+            </div>
+            <!-- If we had category filters we could add them here -->
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-secondary w-100">Filter</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="seller-table">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Product Info</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if products %}
+                        {% for product in products %}
+                        <tr>
+                            <td>
+                                {% if product.image %}
+                                <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}" class="object-fit-cover rounded" style="width: 50px; height: 50px;">
+                                {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <p class="mb-0 fw-semibold text-dark">{{ product.name }}</p>
+                                <small class="text-muted">{{ product.category.category_name if product.category else 'Uncategorized' }}</small>
+                            </td>
+                            <td class="fw-bold" style="color: var(--seller-gold);">₹{{ "{:,.0f}".format(product.price) }}</td>
+                            <td>
+                                {% if product.stock > 10 %}
+                                    <span class="text-success fw-medium">{{ product.stock }}</span>
+                                {% elif product.stock > 0 %}
+                                    <span class="text-warning fw-medium">{{ product.stock }} <small>(Low)</small></span>
+                                {% else %}
+                                    <span class="text-danger fw-medium">Out of Stock</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if product.stock > 0 %}
+                                    <span class="badge-status badge-active bg-success bg-opacity-10 text-success">Active</span>
+                                {% else %}
+                                    <span class="badge-status badge-out_of_stock bg-danger bg-opacity-10 text-danger">Out of Stock</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ url_for('seller.edit_product', product_id=product.product_id) }}" class="btn btn-sm btn-light border text-muted hover-gold me-1 py-1 px-2" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button onclick="confirmDelete({{ product.product_id }}, '{{ product.name|replace("'", "\\'") }}')" class="btn btn-sm btn-light border text-danger py-1 px-2" title="Delete">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                <!-- Hidden form for delete -->
+                                <form id="delete-form-{{ product.product_id }}" action="{{ url_for('seller.delete_product', product_id=product.product_id) }}" method="POST" class="d-none"></form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted mb-3"><i class="fas fa-box-open fa-3x"></i></div>
+                                <h5>No products found</h5>
+                                <p class="text-muted">You haven't added any products yet or none match your search.</p>
+                                <a href="{{ url_for('seller.add_product') }}" class="btn btn-gold mt-2">Add Your First Product</a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmDelete(id, name) {
+        Swal.fire({
+            title: 'Delete Product?',
+            text: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74c3c',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(`delete-form-${id}`).submit();
+            }
+        });
+    }
+</script>
+{% endblock %}

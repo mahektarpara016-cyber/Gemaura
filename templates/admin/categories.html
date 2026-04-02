@@ -1,0 +1,59 @@
+{% extends 'layout/base_admin.html' %}
+{% block title %}Categories - Gemaura Admin{% endblock %}
+{% block content %}
+<div class="topbar">
+    <div class="topbar-title"><h1>Categories</h1><p>Manage product categories</p></div>
+</div>
+<div class="page-content">
+    <div class="grid-2">
+        <!-- Add Category -->
+        <div class="card">
+            <div class="card-header"><h3>➕ Add New Category</h3></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.add_category') }}">
+                    <div class="form-group">
+                        <label class="form-label">Category Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Rings, Necklaces..." required>
+                    </div>
+                    <button type="submit" class="btn btn-gold">Add Category</button>
+                </form>
+                <div style="margin-top:24px;padding:14px;background:#EBF5FB;border-radius:8px;font-size:13px;color:#1a4d6e;">
+                    <strong>Quick Add Popular Categories:</strong>
+                    {% for name in ['Rings','Necklaces','Bracelets','Earrings','Bangles'] %}
+                    <form method="POST" action="{{ url_for('admin.add_category') }}" style="display:inline;">
+                        <input type="hidden" name="name" value="{{ name }}">
+                        <button type="submit" style="background:none;border:1px solid #2980b9;border-radius:50px;padding:4px 12px;font-size:12px;cursor:pointer;margin:4px;color:#2980b9;">{{ name }}</button>
+                    </form>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Category List -->
+        <div class="card">
+            <div class="card-header"><h3>🗂️ All Categories ({{ categories|length }})</h3></div>
+            <div class="card-body" style="padding:0;">
+                <table class="dash-table">
+                    <thead><tr><th>ID</th><th>Name</th><th>Products</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr>
+                            <td>#{{ cat.category_id }}</td>
+                            <td><strong>{{ cat.category_name }}</strong></td>
+                            <td>{{ cat.products|length }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.delete_category', category_id=cat.category_id) }}"
+                                   class="btn btn-danger btn-sm"
+                                   onclick="return confirm('Delete this category?')">🗑️</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" style="text-align:center;padding:32px;color:var(--text-light);">No categories yet. Add one!</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

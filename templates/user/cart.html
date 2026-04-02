@@ -1,0 +1,79 @@
+{% extends 'layout/base_user.html' %}
+{% block title %}My Cart - Gemaura{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:48px;padding-bottom:80px;">
+    <h2 style="margin-bottom:32px;">🛒 My Cart</h2>
+    {% if items %}
+    <div class="cart-layout">
+        <div>
+            {% for item in items %}
+            <div class="cart-item">
+                {% if item.product.image %}
+                <img src="{{ url_for('static', filename='uploads/' + item.product.image) }}" alt="{{ item.product.name }}">
+                {% else %}
+                <img src="https://via.placeholder.com/90x90/F7F0E8/C9A84C?text=💍" alt="{{ item.product.name }}">
+                {% endif %}
+                <div class="cart-item-info">
+                    <h4>{{ item.product.name }}</h4>
+                    <p style="font-size:13px;color:var(--text-light);">{{ item.product.category.category_name }}</p>
+                    <p style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold-dark);margin-top:4px;">₹{{ "%.0f"|format(item.product.price) }}</p>
+                    <div class="cart-item-actions">
+                        <form method="POST" action="{{ url_for('user.update_cart', cart_id=item.cart_id) }}" style="display:flex;align-items:center;gap:8px;">
+                            <div class="qty-selector">
+                                <button type="button" onclick="changeQty('qty{{ item.cart_id }}', -1)">−</button>
+                                <input type="number" name="quantity" id="qty{{ item.cart_id }}" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}">
+                                <button type="button" onclick="changeQty('qty{{ item.cart_id }}', 1)">+</button>
+                            </div>
+                            <button type="submit" class="btn btn-outline-gold" style="padding:8px 16px;font-size:13px;">Update</button>
+                        </form>
+                        <a href="{{ url_for('user.toggle_save_for_later', cart_id=item.cart_id) }}" style="color:var(--gold-dark);font-size:13px;">Save for Later</a>
+                        <a href="{{ url_for('user.remove_from_cart', cart_id=item.cart_id) }}" style="color:#e74c3c;font-size:13px;">✕ Remove</a>
+                    </div>
+                </div>
+                <div style="font-weight:700;font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--dark);">₹{{ "%.0f"|format(item.product.price * item.quantity) }}</div>
+            </div>
+            {% endfor %}
+
+            {% if saved_items %}
+            <div style="margin-top:48px;">
+                <h3 style="margin-bottom:24px;color:var(--text-light);">Saved for Later ({{ saved_items|length }})</h3>
+                {% for item in saved_items %}
+                <div class="cart-item" style="opacity:0.8;">
+                    {% if item.product.image %}
+                    <img src="{{ url_for('static', filename='uploads/' + item.product.image) }}" alt="{{ item.product.name }}" style="filter: grayscale(0.5);">
+                    {% else %}
+                    <img src="https://via.placeholder.com/90x90/F7F0E8/C9A84C?text=💍" alt="{{ item.product.name }}">
+                    {% endif %}
+                    <div class="cart-item-info">
+                        <h4>{{ item.product.name }}</h4>
+                        <p style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text-light);">₹{{ "%.0f"|format(item.product.price) }}</p>
+                        <div class="cart-item-actions">
+                            <a href="{{ url_for('user.toggle_save_for_later', cart_id=item.cart_id) }}" class="btn btn-outline-gold" style="padding:6px 12px;font-size:12px;">Move to Cart</a>
+                            <a href="{{ url_for('user.remove_from_cart', cart_id=item.cart_id) }}" style="color:#e74c3c;font-size:12px;">✕ Remove</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="cart-summary">
+            <h3>Order Summary</h3>
+            <div class="summary-row"><span>Subtotal</span><span>₹{{ "%.0f"|format(total) }}</span></div>
+            <div class="summary-row"><span>Shipping</span><span style="color:#27ae60;">FREE</span></div>
+            <div class="summary-row total"><span>Total</span><span>₹{{ "%.0f"|format(total) }}</span></div>
+            <a href="{{ url_for('user.checkout') }}" class="btn btn-gold btn-block" style="margin-top:24px;">Proceed to Checkout →</a>
+            <a href="{{ url_for('user.shop') }}" style="display:block;text-align:center;margin-top:16px;font-size:13px;color:var(--text-light);">← Continue Shopping</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">🛒</div>
+        <h3>Your cart is empty</h3>
+        <p>Browse our collection and add your favourite jewellery.</p>
+        <a href="{{ url_for('user.shop') }}" class="btn btn-gold">Shop Now</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

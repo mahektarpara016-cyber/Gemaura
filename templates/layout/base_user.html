@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gemaura - Luxury Jewellery{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.2">
+    <!-- Font Awesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}" data-logged-in="{{ 'true' if session.get('user_id') else 'false' }}">
+
+<!-- Luxury Loading Screen -->
+<div id="luxury-loader" class="luxury-loader">
+    <div class="loader-content">
+        <div class="loader-logo">GEMAURA</div>
+        <div class="loader-spinner"></div>
+        <p class="loader-text">Loading Luxury Experience...</p>
+    </div>
+</div>
+
+<!-- INLINE LOADER HIDE SCRIPT: runs immediately, handles deferred/cached JS race condition -->
+<script>
+(function() {
+    function hideLoader() {
+        var el = document.getElementById('luxury-loader');
+        if (!el || el._done) return;
+        el._done = true;
+        el.style.transition = 'opacity 0.5s ease';
+        el.style.opacity = '0';
+        setTimeout(function() { el.style.display = 'none'; }, 600);
+    }
+    // If page already fully loaded (e.g., hard refresh with cached resources)
+    if (document.readyState === 'complete') {
+        hideLoader();
+    } else {
+        window.addEventListener('load', hideLoader);
+    }
+    // Absolute failsafe: hide after 3 seconds no matter what
+    setTimeout(hideLoader, 3000);
+})();
+</script>
+
+
+{% include 'includes/navbar.html' %}
+
+{% block content %}{% endblock %}
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <h3>GEMAURA<span>.</span></h3>
+                <p>Exquisite jewellery crafted for the modern woman. Each piece tells a story of elegance and timeless beauty.</p>
+                <div class="footer-social">
+                    <a href="https://facebook.com/gemaura"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://instagram.com/gemaura"><i class="fab fa-instagram"></i></a>
+                    <a href="https://twitter.com/gemaura"><i class="fab fa-twitter"></i></a>
+                    <a href="https://pinterest.com/gemaura"><i class="fab fa-pinterest-p"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h5>Shop</h5>
+                <ul>
+                    <li><a href="{{ url_for('user.shop') }}">All Jewellery</a></li>
+                    <li><a href="{{ url_for('user.shop') }}?category=1">Rings</a></li>
+                    <li><a href="{{ url_for('user.shop') }}?category=2">Necklaces</a></li>
+                    <li><a href="{{ url_for('user.shop') }}?category=3">Bracelets</a></li>
+                    <li><a href="{{ url_for('user.shop') }}?category=4">Earrings</a></li>
+                    <li><a href="{{ url_for('user.shop') }}?category=6">Bridal Jewellery</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Client Care</h5>
+                <ul>
+                    <li><a href="#">Size Guide</a></li>
+                    <li><a href="#">Shipping & Returns</a></li>
+                    <li><a href="#">Product Care</a></li>
+                    <li><a href="{{ url_for('user.contact') }}">Contact Us</a></li>
+                    <li><a href="#">FAQs</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Newsletter</h5>
+                <p>Join our elite circle for early access and exclusive offers.</p>
+                <form class="newsletter-form" id="newsletter-form" action="{{ url_for('user.subscribe') }}" method="POST">
+                    <input type="email" name="email" placeholder="Your luxury email" required>
+                    <button type="submit">Join</button>
+                </form>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Gemaura. All rights reserved. Crafted with ✨ for jewellery lovers.</p>
+            <div class="footer-links-row">
+                {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('admin.dashboard') }}">Admin Panel</a>
+                {% elif session.get('role') == 'seller' %}
+                <a href="{{ url_for('seller.dashboard') }}">Seller Panel</a>
+                {% elif not session.get('role') %}
+                <a href="{{ url_for('seller.login') }}" target="_blank">Seller Dashboard</a> | 
+                <a href="{{ url_for('admin.login') }}" target="_blank">Admin Panel</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Flash Messages -->
+<div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            <span>{{ '✅' if category == 'success' else '⚠️' if category == 'warning' else '❌' if category == 'danger' else 'ℹ️' }}</span>
+            <span>{{ message }}</span>
+            <span class="close-btn" onclick="this.parentElement.remove()">×</span>
+        </div>
+        {% endfor %}
+    {% endwith %}
+</div>
+
+<!-- Quick View Modal -->
+<div id="quickview-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div id="quickview-body"></div>
+    </div>
+</div>
+
+<!-- Guest Auth Modal -->
+<div id="auth-modal" class="modal">
+    <div class="modal-content" style="max-width: 400px; text-align: center; padding: 40px;">
+        <span class="close-modal">&times;</span>
+        <div class="auth-modal-body">
+            <i class="fas fa-lock auth-icon"></i>
+            <h3>Luxury Awaits</h3>
+            <p>Please login or create an account to start your collection.</p>
+            <div class="auth-modal-btns">
+                <a href="{{ url_for('user.login') }}" class="btn btn-gold">Login to Gemaura</a>
+                <a href="{{ url_for('user.register') }}" class="btn btn-outline-gold">Become a Member</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

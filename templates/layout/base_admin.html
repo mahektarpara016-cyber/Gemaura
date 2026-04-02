@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel - Gemaura{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body class="admin-body">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="adm-sidebar" id="adminSidebar">
+    <div class="adm-sidebar-brand">
+        <div class="brand-icon"><i class="fas fa-gem"></i></div>
+        <div class="brand-text">
+            <span class="brand-name">GEMAURA</span>
+            <span class="brand-role">Admin Panel</span>
+        </div>
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" onclick="toggleSidebar()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="adm-sidebar-scroll">
+        <div class="nav-section-label">Overview</div>
+        <nav class="adm-nav">
+            <a href="{{ url_for('admin.dashboard') }}" class="adm-nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+                <span class="nav-label">Dashboard</span>
+                {% if request.endpoint == 'admin.dashboard' %}<span class="nav-dot"></span>{% endif %}
+            </a>
+        </nav>
+
+        <div class="nav-section-label">Management</div>
+        <nav class="adm-nav">
+            <a href="{{ url_for('admin.users') }}" class="adm-nav-link {% if request.endpoint == 'admin.users' %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-users"></i></span>
+                <span class="nav-label">Users</span>
+            </a>
+            <a href="{{ url_for('admin.sellers') }}" class="adm-nav-link {% if request.endpoint == 'admin.sellers' %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-store"></i></span>
+                <span class="nav-label">Sellers</span>
+            </a>
+            <a href="{{ url_for('admin.products') }}" class="adm-nav-link {% if 'product' in request.endpoint %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-gem"></i></span>
+                <span class="nav-label">Products</span>
+            </a>
+            <a href="{{ url_for('admin.categories') }}" class="adm-nav-link {% if request.endpoint == 'admin.categories' %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-tags"></i></span>
+                <span class="nav-label">Categories</span>
+            </a>
+            <a href="{{ url_for('admin.orders') }}" class="adm-nav-link {% if request.endpoint == 'admin.orders' %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-shopping-bag"></i></span>
+                <span class="nav-label">Orders</span>
+            </a>
+            <a href="{{ url_for('admin.reviews') }}" class="adm-nav-link {% if request.endpoint == 'admin.reviews' %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-star"></i></span>
+                <span class="nav-label">Reviews</span>
+            </a>
+            <a href="{{ url_for('admin.reels') }}" class="adm-nav-link {% if request.endpoint == 'admin.reels' %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-film"></i></span>
+                <span class="nav-label">Reels</span>
+            </a>
+        </nav>
+
+        <div class="nav-section-label">Account</div>
+        <nav class="adm-nav">
+            <a href="{{ url_for('admin.profile') }}" class="adm-nav-link {% if request.endpoint == 'admin.profile' %}active{% endif %}">
+                <span class="nav-icon"><i class="fas fa-user-circle"></i></span>
+                <span class="nav-label">My Profile</span>
+            </a>
+            <a href="{{ url_for('user.index') }}" class="adm-nav-link" target="_blank">
+                <span class="nav-icon"><i class="fas fa-globe"></i></span>
+                <span class="nav-label">View Website</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Sidebar Footer: Avatar -->
+    <div class="adm-sidebar-user">
+        {% if current_user %}
+        <div class="adm-user-avatar">
+            {% if current_user.profile_image %}
+                <img src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_image) }}" alt="Admin" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="adm-avatar-initial" style="display:none;background:#D4AF37;">{{ current_user.initial_avatar }}</div>
+            {% else %}
+                <div class="adm-avatar-initial" style="background:#D4AF37;">{{ current_user.initial_avatar }}</div>
+            {% endif %}
+        </div>
+        <div class="adm-user-info">
+            <div class="adm-user-name">Administrator</div>
+            <div class="adm-user-email">admin@gemaura.com</div>
+        </div>
+        {% endif %}
+        <a href="{{ url_for('admin.logout') }}" class="adm-logout-btn" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
+    </div>
+</aside>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ===== MAIN WRAPPER ===== -->
+<div class="adm-main-wrapper">
+
+    <!-- ===== TOP HEADER ===== -->
+    <header class="adm-topbar">
+        <div class="adm-topbar-left">
+            <button class="adm-menu-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="adm-breadcrumb">
+                <span class="breadcrumb-home"><i class="fas fa-home"></i></span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="breadcrumb-current">{% block breadcrumb %}Dashboard{% endblock %}</span>
+            </div>
+        </div>
+
+        <div class="adm-topbar-search">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search orders, users, products..." id="adminSearch">
+        </div>
+
+        <div class="adm-topbar-right">
+            <a href="{{ url_for('user.index') }}" class="adm-topbar-btn" target="_blank" title="View Website">
+                <i class="fas fa-external-link-alt"></i>
+                <span>View Site</span>
+            </a>
+
+            <div class="adm-notif-btn" title="Notifications">
+                <i class="fas fa-bell"></i>
+                <span class="notif-badge">3</span>
+            </div>
+
+            <div class="adm-profile-wrap" id="adminProfileWrap">
+                <button class="adm-profile-btn" onclick="toggleAdminDropdown()">
+                    {% if current_user and current_user.profile_image %}
+                        <img src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_image) }}" class="adm-profile-img" alt="Admin">
+                    {% else %}
+                        <div class="adm-profile-initial">{{ current_user.initial_avatar if current_user else 'A' }}</div>
+                    {% endif %}
+                    <div class="adm-profile-info">
+                        <span class="adm-profile-name">Administrator</span>
+                        <span class="adm-profile-role">Super Admin</span>
+                    </div>
+                    <i class="fas fa-chevron-down adm-profile-caret"></i>
+                </button>
+                <div class="adm-profile-dropdown" id="adminProfileDropdown">
+                    <a href="{{ url_for('admin.profile') }}"><i class="fas fa-user-circle"></i> My Profile</a>
+                    <a href="{{ url_for('admin.dashboard') }}"><i class="fas fa-chart-pie"></i> Dashboard</a>
+                    <hr>
+                    <a href="{{ url_for('admin.logout') }}" class="dropdown-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <div class="adm-flash adm-flash-{{ category }}">
+            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' if category == 'warning' else 'times-circle' if category == 'danger' else 'info-circle' }}"></i>
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+        </div>
+        {% endfor %}
+    {% endwith %}
+
+    <!-- ===== PAGE CONTENT ===== -->
+    <main class="adm-content">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<!-- ===== JS ===== -->
+<script>
+    // Sidebar toggle
+    function toggleSidebar() {
+        const sidebar = document.getElementById('adminSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('collapsed');
+        overlay.classList.toggle('visible');
+    }
+
+    // Admin profile dropdown
+    function toggleAdminDropdown() {
+        const dd = document.getElementById('adminProfileDropdown');
+        dd.classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+        const wrap = document.getElementById('adminProfileWrap');
+        if (wrap && !wrap.contains(e.target)) {
+            const dd = document.getElementById('adminProfileDropdown');
+            if (dd) dd.classList.remove('open');
+        }
+    });
+
+    // Auto-dismiss flash messages
+    setTimeout(function() {
+        document.querySelectorAll('.adm-flash').forEach(function(el) {
+            el.style.opacity = '0';
+            setTimeout(function() { el.remove(); }, 400);
+        });
+    }, 4000);
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

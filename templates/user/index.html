@@ -1,0 +1,331 @@
+{% extends 'layout/base_user.html' %}
+{% block title %}Gemaura - Luxury Jewellery Home{% endblock %}
+
+{% block content %}
+<!-- 1. Hero Video Section -->
+<section class="hero hero-video-section">
+    <div class="video-container">
+        <video autoplay muted loop playsinline id="hero-vid">
+            <source src="{{ url_for('static', filename='reels/1.mp4') }}" type="video/mp4">
+        </video>
+        <button id="hero-audio-toggle" class="hero-audio-btn" title="Toggle Sound">
+            <i class="fas fa-volume-mute"></i>
+        </button>
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="container">
+        <div class="hero-video-content">
+            <div class="hero-badge reveal-on-scroll">✦ Luxury Jewellery Collection ✦</div>
+            <h1 class="reveal-on-scroll">Authentic <span>Luxury</span></h1>
+            <p class="reveal-on-scroll">Discover timeless elegance crafted for every occasion. Experience the pinnacle
+                of craftsmanship.</p>
+            <div class="hero-btns reveal-on-scroll" style="justify-content: center;">
+                <a href="{{ url_for('user.shop') }}" class="btn btn-primary-lux">Explore Collection</a>
+                <a href="{{ url_for('user.shop') }}" class="btn btn-secondary-lux">Shop Now</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 2. Flash Deals Section -->
+{% if flash_deals %}
+<section class="section flash-deals reveal-on-scroll">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">Limited Time Offers</div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>Flash Deals</h2>
+                <div class="countdown-timer" id="flash-timer">
+                    Ending in: <span id="timer-h">02</span>:<span id="timer-m">45</span>:<span id="timer-s">12</span>
+                </div>
+            </div>
+            <div class="divider"></div>
+        </div>
+        <div class="product-grid">
+            {% for p in flash_deals %}
+            <div class="product-card reveal-on-scroll">
+                <div class="product-img-wrap">
+                    <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}">
+                        {% if p.image %}
+                        <img src="{{ url_for('static', filename='uploads/' + p.image) }}" alt="{{ p.name }}" loading="lazy">
+                        {% else %}
+                        <img src="https://via.placeholder.com/400x400/F7F0E8/C9A84C?text=💍" alt="{{ p.name }}">
+                        {% endif %}
+                    </a>
+                    <div class="product-badge">FLASH DEAL</div>
+                    <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}" class="product-overlay">
+                        <span class="btn-view-luxury">View Details</span>
+                    </a>
+                    <button class="wishlist-btn-main wishlist-toggle-btn {% if p.product_id in wishlist_ids %}active{% endif %}" 
+                            data-product-id="{{ p.product_id }}" 
+                            title="Add to wishlist">
+                        <i class="{% if p.product_id in wishlist_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+                    </button>
+                </div>
+                <div class="product-info">
+                    <div class="product-meta">
+                        <span class="product-category-label">{{ p.category.category_name }}</span>
+                        <div class="product-rating">
+                            <span class="stars" style="color:var(--gold-primary);">
+                                ★★★★☆
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}" style="text-decoration:none;">
+                        <h3 class="product-name-title">{{ p.name }}</h3>
+                    </a>
+                    <div class="product-footer-row">
+                        <div class="price-wrap">
+                            <span class="price-actual">₹{{ "%.0f"|format(p.deal_price|float if p.deal_price else p.price|float * 0.8) }}</span>
+                            <span class="price-old">₹{{ "%.0f"|format(p.price|float) }}</span>
+                        </div>
+                        <button class="add-cart-icon-btn cart-btn-ajax" data-product-id="{{ p.product_id }}" title="Add to Bag">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+
+<!-- 4. Shop Categories Section -->
+<section class="section reveal-on-scroll" style="background: var(--white);">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">Browse By</div>
+            <h2>Shop Categories</h2>
+            <div class="divider"></div>
+        </div>
+        <div class="categories-grid-refined">
+            {% set cat_details = {
+            'Rings': {'icon': '', 'img': url_for('static', filename='images/categories/rings.png')},
+            'Necklaces': {'icon': '', 'img': url_for('static', filename='images/categories/necklaces.png')},
+            'Bracelets': {'icon': '', 'img': url_for('static', filename='images/categories/bracelets.png')},
+            'Earrings': {'icon': '', 'img': url_for('static', filename='images/categories/earrings.png')},
+            'Bangles': {'icon': '', 'img': url_for('static', filename='images/categories/bangles.png')},
+            'Bridal Jewellery': {'icon': '', 'img': url_for('static', filename='images/categories/bridal.png')}
+            } %}
+            {% if categories %}
+            {% for cat in categories %}
+            {% set details = cat_details.get(cat.category_name, {'icon': '✦', 'img': url_for('static', filename='images/cat_fallback.jpg')}) %}
+            <a href="{{ url_for('user.shop') }}?category={{ cat.category_id }}" class="category-card-luxury">
+                <div class="cat-img-wrap">
+                    <img src="{{ details.img }}" alt="{{ cat.category_name }}"
+                        onerror="this.src='{{ url_for('static', filename='images/cat_fallback.jpg') }}'">
+                </div>
+                <div class="cat-info-overlay">
+                    <span class="cat-icon-text">{{ details.icon }}</span>
+                    <h4>{{ cat.category_name }}</h4>
+                    <span class="cat-count">{{ cat.products|length }} Pieces</span>
+                    <div class="cat-hover-bar"></div>
+                </div>
+            </a>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- 5. Featured Collection -->
+<section class="section reveal-on-scroll">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">Handpicked For You</div>
+            <h2>Featured Collection</h2>
+            <div class="divider"></div>
+        </div>
+        {% if featured %}
+        <div class="product-grid">
+            {% for p in featured %}
+            <div class="product-card reveal-on-scroll">
+                <div class="product-img-wrap">
+                    <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}">
+                        {% if p.image %}
+                        <img src="{{ url_for('static', filename='uploads/' + p.image) }}" alt="{{ p.name }}" loading="lazy">
+                        {% else %}
+                        <img src="https://via.placeholder.com/400x400/F7F0E8/C9A84C?text=💍" alt="{{ p.name }}">
+                        {% endif %}
+                    </a>
+                    {% if p.is_new %}
+                    <div class="product-badge">NEW ARRIVAL</div>
+                    {% endif %}
+                    <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}" class="product-overlay">
+                        <span class="btn-view-luxury">View Details</span>
+                    </a>
+                    <button class="wishlist-btn-main wishlist-toggle-btn {% if p.product_id in wishlist_ids %}active{% endif %}" 
+                            data-product-id="{{ p.product_id }}" 
+                            title="Add to wishlist">
+                        <i class="{% if p.product_id in wishlist_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+                    </button>
+                </div>
+                <div class="product-info">
+                    <div class="product-meta">
+                        <span class="product-category-label">{{ p.category.category_name }}</span>
+                        <div class="product-rating">
+                            <span class="stars" style="color:var(--gold-primary);">
+                                ★★★★☆
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}" style="text-decoration:none;">
+                        <h3 class="product-name-title">{{ p.name }}</h3>
+                    </a>
+                    <div class="product-footer-row">
+                        <div class="price-wrap">
+                            <span class="price-actual">₹{{ "%.0f"|format(p.price|float) }}</span>
+                            <span class="price-old">₹{{ "%.0f"|format(p.price|float * 1.2) }}</span>
+                        </div>
+                        <button class="add-cart-icon-btn cart-btn-ajax" data-product-id="{{ p.product_id }}" title="Add to Bag">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{{ url_for('user.shop') }}" class="btn btn-outline-gold">View All Products</a>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">💎</div>
+            <h3>No Products Yet</h3>
+            <p>Our sellers are adding beautiful jewellery. Check back soon!</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- 6. Trending Jewellery Section -->
+<section class="section trending-section" style="background: var(--beige-bg);">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">Top Sellers</div>
+            <h2>Trending Jewellery</h2>
+            <div class="divider"></div>
+        </div>
+        {% if trending %}
+        <div class="product-grid">
+            {% for p in trending %}
+            <div class="product-card reveal-on-scroll">
+                <div class="product-img-wrap">
+                    <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}">
+                        {% if p.image %}
+                        <img src="{{ url_for('static', filename='uploads/' + p.image) }}" alt="{{ p.name }}" loading="lazy">
+                        {% else %}
+                        <img src="https://via.placeholder.com/400x400/F7F0E8/C9A84C?text=💍" alt="{{ p.name }}">
+                        {% endif %}
+                    </a>
+                    <div class="product-badge">TRENDING</div>
+                    <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}" class="product-overlay">
+                        <span class="btn-view-luxury">View Details</span>
+                    </a>
+                    <button class="wishlist-btn-main wishlist-toggle-btn {% if p.product_id in wishlist_ids %}active{% endif %}" 
+                            data-product-id="{{ p.product_id }}" 
+                            title="Add to wishlist">
+                        <i class="{% if p.product_id in wishlist_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+                    </button>
+                </div>
+                <div class="product-info">
+                    <div class="product-meta">
+                        <span class="product-category-label">{{ p.category.category_name }}</span>
+                        <div class="product-rating">
+                            <span class="stars" style="color:var(--gold-primary);">
+                                ★★★★☆
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}" style="text-decoration:none;">
+                        <h3 class="product-name-title">{{ p.name }}</h3>
+                    </a>
+                    <div class="product-footer-row">
+                        <div class="price-wrap">
+                            <span class="price-actual">₹{{ "%.0f"|format(p.price|float) }}</span>
+                            <span class="price-old">₹{{ "%.0f"|format(p.price|float * 1.2) }}</span>
+                        </div>
+                        <button class="add-cart-icon-btn cart-btn-ajax" data-product-id="{{ p.product_id }}" title="Add to Bag">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- 7. Brand Heritage Section -->
+<section class="section heritage-section reveal-on-scroll">
+    <div class="heritage-container">
+        <video autoplay muted loop playsinline class="heritage-bg-video">
+            <source src="{{ url_for('static', filename='reels/6.mp4') }}" type="video/mp4">
+        </video>
+        <div class="heritage-overlay"></div>
+        <div class="container heritage-content">
+            <div class="section-label" style="color: var(--gold-light);">Our Legacy</div>
+            <h2 style="color: white; font-size: 3.5rem;">The Gemaura Heritage</h2>
+            <div class="divider" style="background: var(--gold-primary); margin: 20px auto;"></div>
+            <p class="heritage-text">
+                For over three generations, Gemaura has been the custodian of timeless elegance.
+                Our artisans blend ancient Indian craftsmanship with contemporary luxury design
+                to create pieces that aren't just jewellery, but stories passed down through time.
+            </p>
+            <div class="heritage-stats">
+                <div class="stat-item">
+                    <span class="stat-num">75+</span>
+                    <span class="stat-label">Years of Mastery</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-num">10k+</span>
+                    <span class="stat-label">Happy Brides</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-num">100%</span>
+                    <span class="stat-label">Certified Gold</span>
+                </div>
+            </div>
+            <a href="{{ url_for('user.about') }}" class="btn btn-outline-gold"
+                style="border-color: white; color: white;">Discover Our Story</a>
+        </div>
+    </div>
+</section>
+
+<!-- 8. Trust Features -->
+<section class="section trust-features"
+    style="background: linear-gradient(135deg, #1A1A1A 0%, #333333 100%); color: white;">
+    <div class="container">
+        <div class="product-grid" style="text-align: center;">
+            {% for icon, title, desc in [('fas fa-shipping-fast','Free Shipping','On orders above ₹5000'),('fas
+            fa-check-circle','Certified Jewellery','100% authentic jewellery'),('fas fa-undo','Easy Returns','30-day
+            return policy'),('fas fa-lock','Secure Payment','256-bit SSL encryption')] %}
+            <div class="reveal-on-scroll">
+                <div style="font-size: 32px; margin-bottom: 20px; color: var(--gold-primary);"><i
+                        class="{{ icon }}"></i></div>
+                <h4
+                    style="color: var(--gold-primary); font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: 8px;">
+                    {{ title }}</h4>
+                <p style="font-size: 14px; color: rgba(255,255,255,0.7);">{{ desc }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- 9. Newsletter Subscription -->
+<section class="newsletter reveal-on-scroll">
+    <div class="container">
+        <h2>Join the Gemaura Family</h2>
+        <p>Get 10% off your first order and exclusive updates on new collections.</p>
+        <form class="newsletter-form" id="newsletter-form">
+            <input type="email" name="email" id="news-email" placeholder="Enter your email address" required>
+            <button type="submit">Subscribe →</button>
+        </form>
+        <div id="newsletter-msg" style="margin-top:15px; font-weight:500;"></div>
+    </div>
+</section>
+{% endblock %}

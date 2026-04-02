@@ -1,0 +1,268 @@
+{% extends 'layout/base_user.html' %}
+{% block title %}Order #GEM-{{ order.order_id }} - Gemaura{% endblock %}
+
+{% block head %}
+<style>
+    .detail-container {
+        padding: 60px 20px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    .detail-card {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--beige-dark);
+        margin-bottom: 32px;
+        overflow: hidden;
+    }
+    .detail-header {
+        padding: 32px;
+        border-bottom: 1px solid var(--beige-dark);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    /* Tracking Timeline */
+    .tracking-wrapper {
+        padding: 40px;
+        background: #fafaf8;
+        border-bottom: 1px solid var(--beige-dark);
+    }
+    .tracking-timeline {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .tracking-timeline::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+    .step {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        flex: 1;
+    }
+    .step-icon {
+        width: 44px;
+        height: 44px;
+        background: #e9ecef;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px auto;
+        border: 4px solid white;
+        color: white;
+        font-size: 16px;
+        transition: 0.3s;
+    }
+    .step.active .step-icon {
+        background: var(--gold-primary);
+        box-shadow: 0 0 15px rgba(201, 168, 76, 0.4);
+    }
+    .step.completed .step-icon {
+        background: #27ae60;
+    }
+    .step-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .step.active .step-label { color: var(--gold-dark); }
+    .step.completed .step-label { color: #27ae60; }
+
+    .step.cancelled .step-icon { background: #e74c3c; }
+    .step.cancelled .step-label { color: #e74c3c; }
+
+    /* Order Info Grid */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 32px;
+        padding: 32px;
+    }
+    .info-box h4 {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-light);
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--beige-dark);
+        padding-bottom: 8px;
+    }
+    .info-content { font-size: 15px; line-height: 1.6; }
+
+    .product-table { width: 100%; border-collapse: collapse; }
+    .product-table th { text-align: left; padding: 12px; color: var(--text-light); font-size: 13px; text-transform: uppercase; }
+    .product-table td { padding: 16px 12px; border-bottom: 1px solid #f1f3f5; }
+    .product-table tr:last-child td { border-bottom: none; }
+
+    @media (max-width: 600px) {
+        .tracking-timeline { flex-direction: column; align-items: flex-start; gap: 24px; }
+        .tracking-timeline::before { display: none; }
+        .step { display: flex; align-items: center; gap: 16px; text-align: left; }
+        .step-icon { margin: 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <a href="{{ url_for('user.orders') }}" style="display: inline-flex; align-items: center; gap: 8px; color: var(--gold-dark); text-decoration: none; font-weight: 600; margin-bottom: 24px;">
+        <i class="fas fa-arrow-left"></i> Back to My Orders
+    </a>
+
+    <div class="detail-card">
+        <div class="detail-header">
+            <div>
+                <h2 style="margin: 0 0 8px 0; font-size: 28px; color: var(--gold-dark);">Order #GEM-{{ order.order_id }}</h2>
+                <p style="margin: 0; color: var(--text-light);">Placed on {{ order.created_at.strftime('%d %B %Y at %H:%M') }}</p>
+            </div>
+            <div style="text-align: right;">
+                {% if order.status|lower in ['pending', 'confirmed', 'shipped'] %}
+                {# Trigger the modal from orders page or handle here - for now keeping simple for detail page #}
+                <form action="{{ url_for('user.cancel_order', order_id=order.order_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this royal selection?')">
+                    <input type="hidden" name="reason" value="Cancelled from detail page">
+                    <button type="submit" class="btn btn-outline-gold" style="color: #e74c3c; border-color: #e74c3c;">Cancel Order</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Tracking Timeline -->
+        <div class="tracking-wrapper">
+            <div class="tracking-timeline">
+                {% set statuses = ['pending', 'processing', 'shipped', 'delivered'] %}
+                {% if order.status|lower == 'cancelled' %}
+                    <div class="step cancelled">
+                        <div class="step-icon"><i class="fas fa-times"></i></div>
+                        <div class="step-label">Cancelled</div>
+                    </div>
+                    {% if order.refund_status and order.refund_status != 'na' %}
+                    <div class="step active">
+                        <div class="step-icon"><i class="fas fa-undo"></i></div>
+                        <div class="step-label">Refund: {{ order.refund_status|title }}</div>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    {% for s in statuses %}
+                        {% set active = order.status|lower == s %}
+                        {% set completed = statuses.index(order.status|lower) > statuses.index(s) if order.status|lower in statuses else False %}
+                        <div class="step {{ 'active' if active }} {{ 'completed' if completed }}">
+                            <div class="step-icon">
+                                <i class="fas {{ 'fa-check' if completed else ('fa-circle' if active else 'fa-circle') }}"></i>
+                            </div>
+                            <div class="step-label">{{ s }}</div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <h4><i class="fas fa-truck"></i> Shipping Address</h4>
+                <div class="info-content">
+                    <strong>{{ order.shipping_name }}</strong><br>
+                    {{ order.shipping_address }}<br>
+                    Phone: {{ order.shipping_phone }}
+                </div>
+            </div>
+            <div class="info-box">
+                <h4><i class="fas fa-credit-card"></i> Payment Details</h4>
+                <div class="info-content">
+                    Method: <strong style="text-transform: uppercase;">{{ order.payment_method }}</strong><br>
+                    Status: <strong style="color: {{ '#27ae60' if order.payment_status == 'Paid (Simulation)' else '#f08c00' }}">{{ order.payment_status }}</strong><br>
+                    {% if order.upi_id %}
+                    UPI ID: <strong>{{ order.upi_id }}</strong>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-box">
+                <h4><i class="fas fa-sticky-note"></i> Order Notes</h4>
+                <div class="info-content">
+                    {{ order.order_notes if order.order_notes else 'No special instructions.' }}
+                </div>
+            </div>
+            {% if order.status|lower == 'cancelled' %}
+            <div class="info-box" style="border: 1px solid #ffe3e3; background: #fff5f5; border-radius: 8px; padding: 15px;">
+                <h4 style="color: #e74c3c; border-color: #ffc9c9;"><i class="fas fa-ban"></i> Cancellation Info</h4>
+                <div class="info-content">
+                    <strong>Date:</strong> {{ order.cancel_date.strftime('%d %b %Y') if order.cancel_date else 'N/A' }}<br>
+                    <strong>Reason:</strong> {{ order.cancel_reason or 'Not specified' }}<br>
+                    {% if order.refund_status and order.refund_status != 'na' %}
+                    <strong>Refund Status:</strong> <span style="color: #1971c2; font-weight: 700;">{{ order.refund_status|title }}</span> (₹{{ "%.0f"|format(order.refund_amount) }})
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="padding: 0 32px 32px 32px;">
+            <h4 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); margin-bottom: 16px; border-bottom: 1px solid var(--beige-dark); padding-bottom: 8px;">Order Items</h4>
+            <table class="product-table">
+                <thead>
+                    <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                {% if item.product.image %}
+                                <img src="{{ url_for('static', filename='uploads/' + item.product.image) }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                {% endif %}
+                                <span>{{ item.product.name }}</span>
+                            </div>
+                        </td>
+                        <td>₹{{ "%.0f"|format(item.price_at_time) }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₹{{ "%.0f"|format(item.price_at_time * item.quantity) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div style="margin-top: 24px; border-top: 1px solid var(--beige-dark); padding-top: 16px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                <div style="display: flex; gap: 40px; color: var(--text-light);">
+                    <span>Subtotal</span>
+                    <span>₹{{ "%.0f"|format(order.subtotal) }}</span>
+                </div>
+                {% if order.discount_amount > 0 %}
+                <div style="display: flex; gap: 40px; color: #27ae60;">
+                    <span>Discount</span>
+                    <span>-₹{{ "%.0f"|format(order.discount_amount) }}</span>
+                </div>
+                {% endif %}
+                <div style="display: flex; gap: 40px; color: var(--text-light);">
+                    <span>Shipping</span>
+                    <span>₹{{ "%.0f"|format(order.shipping_fee) }}</span>
+                </div>
+                <div style="display: flex; gap: 40px; color: var(--text-light);">
+                    <span>Tax (GST)</span>
+                    <span>₹{{ "%.0f"|format(order.tax) }}</span>
+                </div>
+                <div style="display: flex; gap: 40px; font-size: 20px; font-weight: 700; color: var(--gold-dark); margin-top: 8px;">
+                    <span>Grand Total</span>
+                    <span>₹{{ "%.0f"|format(order.total_price) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

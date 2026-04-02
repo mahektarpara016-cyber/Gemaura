@@ -1,0 +1,41 @@
+{% extends 'layout/base_user.html' %}
+{% block title %}Wishlist - Gemaura{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:48px;padding-bottom:80px;">
+    <h2 style="margin-bottom:32px;">❤️ My Wishlist</h2>
+    {% if items %}
+    <div class="product-grid">
+        {% for w in items %}
+        <div class="product-card" id="wishlist-item-{{ w.product_id }}">
+            <div class="product-img-wrap">
+                {% if w.product.image %}<img src="{{ url_for('static', filename='uploads/' + w.product.image) }}" alt="{{ w.product.name }}">
+                {% else %}<img src="https://via.placeholder.com/400x400/F7F0E8/C9A84C?text=💍" alt="{{ w.product.name }}">{% endif %}
+                <button class="wishlist-remove-btn wishlist-toggle-btn" data-product-id="{{ w.product_id }}" title="Remove">✕</button>
+            </div>
+            <div class="product-info">
+                <div class="product-meta">
+                    <span class="product-category-label">{{ w.product.category.category_name }}</span>
+                </div>
+                <h3 class="product-name-title">{{ w.product.name }}</h3>
+                <div class="product-footer-row">
+                    <div class="price-wrap">
+                        <span class="price-actual">₹{{ "%.0f"|format(w.product.price) }}</span>
+                    </div>
+                    <button class="add-cart-icon-btn btn-primary-lux add-to-cart-simple" data-product-id="{{ w.product_id }}" style="width: 44px; height: 44px; padding: 0;">
+                        <i class="fas fa-shopping-bag"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">🤍</div>
+        <h3>Your wishlist is empty</h3>
+        <p>Save your favourite pieces and come back anytime.</p>
+        <a href="{{ url_for('user.shop') }}" class="btn btn-primary-lux">Shop Now</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

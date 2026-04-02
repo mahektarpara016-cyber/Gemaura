@@ -1,0 +1,44 @@
+{% extends 'layout/base_admin.html' %}
+{% block title %}Sellers - Gemaura Admin{% endblock %}
+{% block content %}
+<div class="topbar">
+    <div class="topbar-title"><h1>Sellers</h1><p>Manage vendor accounts</p></div>
+</div>
+<div class="page-content">
+    <div class="card">
+        <div class="card-header"><h3>🏪 All Sellers ({{ sellers|length }})</h3></div>
+        <div class="card-body" style="padding:0;">
+            <div class="table-wrap">
+                <table class="dash-table">
+                    <thead>
+                        <tr><th>ID</th><th>Shop Name</th><th>Email</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sellers %}
+                        <tr>
+                            <td>#{{ s.seller_id }}</td>
+                            <td><strong>{{ s.shop_name }}</strong></td>
+                            <td>{{ s.email }}</td>
+                            <td><span class="badge badge-{{ s.status }}">{{ s.status|title }}</span></td>
+                            <td>{{ s.created_at.strftime('%b %d, %Y') }}</td>
+                            <td style="display:flex;gap:8px;flex-wrap:wrap;">
+                                {% if s.status == 'pending' %}
+                                <a href="{{ url_for('admin.approve_seller', seller_id=s.seller_id) }}" class="btn btn-success btn-sm">✅ Approve</a>
+                                {% elif s.status == 'approved' %}
+                                <a href="{{ url_for('admin.disable_seller', seller_id=s.seller_id) }}" class="btn btn-warning btn-sm">🚫 Disable</a>
+                                {% elif s.status == 'disabled' %}
+                                <a href="{{ url_for('admin.approve_seller', seller_id=s.seller_id) }}" class="btn btn-success btn-sm">✅ Re-Activate</a>
+                                {% endif %}
+                                <a href="{{ url_for('admin.delete_seller', seller_id=s.seller_id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this seller?')">🗑️</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-light);">No sellers yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

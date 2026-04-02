@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Seller Panel - Gemaura{% endblock %}</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/seller.css') }}">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="seller-sidebar" id="sellerSidebar">
+        <a href="{{ url_for('seller.dashboard') }}" class="seller-brand">
+            <i class="fas fa-gem"></i> GEMAURA
+        </a>
+        
+        <nav class="seller-nav">
+            <a href="{{ url_for('seller.dashboard') }}" class="seller-nav-item {% if request.endpoint == 'seller.dashboard' %}active{% endif %}">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+            <a href="{{ url_for('seller.products') }}" class="seller-nav-item {% if 'product' in request.endpoint %}active{% endif %}">
+                <i class="fas fa-box-open"></i> My Products
+            </a>
+            <a href="{{ url_for('seller.orders') }}" class="seller-nav-item {% if 'order' in request.endpoint %}active{% endif %}">
+                <i class="fas fa-shopping-bag"></i> Orders
+            </a>
+            <a href="{{ url_for('seller.earnings') }}" class="seller-nav-item {% if 'earn' in request.endpoint %}active{% endif %}">
+                <i class="fas fa-wallet"></i> Earnings
+            </a>
+            <a href="{{ url_for('seller.reels') }}" class="seller-nav-item {% if 'reel' in request.endpoint %}active{% endif %}">
+                <i class="fas fa-video"></i> My Reels
+            </a>
+            <a href="{{ url_for('seller.profile') }}" class="seller-nav-item {% if 'profile' in request.endpoint %}active{% endif %}">
+                <i class="fas fa-user-circle"></i> Profile
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <a href="{{ url_for('seller.logout') }}" class="seller-nav-item text-danger" style="color: #e74c3c !important;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="seller-main">
+        <!-- Top Navbar -->
+        <header class="seller-topbar">
+            <div class="topbar-left">
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h4 class="mb-0 fw-bold d-none d-md-block text-dark">{% block page_title %}Dashboard{% endblock %}</h4>
+            </div>
+            
+            <div class="topbar-right">
+                <!-- Notifications -->
+                <div class="notification-bell" onclick="Swal.fire('No new notifications', '', 'info')">
+                    <i class="far fa-bell"></i>
+                    <!-- <span class="notification-dot"></span> -->
+                </div>
+                
+                <!-- Profile Dropdown (Bootstrap) -->
+                <div class="dropdown">
+                    <div class="seller-profile-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="seller-info text-end d-none d-md-flex">
+                            <span class="seller-name">{{ seller.shop_name if seller else 'Shop' }}</span>
+                            <span class="seller-role">Verified Seller</span>
+                        </div>
+                        {% if seller and seller.logo and seller.logo != 'None' and seller.logo != '' %}
+                            <img src="{{ url_for('static', filename='uploads/profiles/' + seller.logo) }}" class="seller-avatar" alt="Profile" onerror="this.onerror=null; this.src=''; this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none');">
+                            <div class="seller-avatar d-none">{{ (seller.shop_name or 'S')[0] | upper }}</div>
+                        {% else %}
+                            <div class="seller-avatar">{{ (seller.shop_name or 'S')[0] | upper if seller else 'S' }}</div>
+                        {% endif %}
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
+                        <li><h6 class="dropdown-header">{{ seller.email if seller else '' }}</h6></li>
+                        <li><a class="dropdown-item" href="{{ url_for('seller.profile') }}"><i class="fas fa-user-circle me-2 text-muted"></i> My Profile</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('user.index') }}" target="_blank"><i class="fas fa-external-link-alt me-2 text-muted"></i> View Store</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="{{ url_for('seller.logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Content -->
+        <div class="seller-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Flash Messages via SweetAlert2 -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer)
+                                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                            }
+                        });
+                        
+                        let iconType = 'success';
+                        if('{{ category }}' === 'danger') iconType = 'error';
+                        else if('{{ category }}' === 'warning') iconType = 'warning';
+                        else if('{{ category }}' === 'info') iconType = 'info';
+
+                        Toast.fire({
+                            icon: iconType,
+                            title: '{{ message }}'
+                        });
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            // Sidebar Toggle
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sellerSidebar');
+            if(toggleBtn && sidebar) {
+                toggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('show');
+                });
+            }
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

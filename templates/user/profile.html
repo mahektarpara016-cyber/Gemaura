@@ -1,0 +1,167 @@
+{% extends 'layout/base_user.html' %}
+{% block title %}My Profile - Gemaura{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:48px;padding-bottom:80px;">
+    <div class="dashboard-layout">
+        <aside class="dashboard-sidebar">
+            <div class="user-info-side">
+                <div class="user-avatar-container">
+                    {% if user.profile_image %}
+                    <img src="{{ url_for('static', filename='uploads/profiles/' + user.profile_image) }}" class="user-avatar-dash-img" id="profile-preview">
+                    {% else %}
+                    <div class="user-avatar-dash-initial" style="background: {{ user.avatar_color }}; color: white">{{ user.initial_avatar }}</div>
+                    {% endif %}
+                    <div class="avatar-edit-icon" onclick="document.getElementById('profile_image_input').click()" title="Change Photo">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                <h3>{{ user.name }}</h3>
+                <p>{{ user.email }}</p>
+                {% if user.profile_image %}
+                <form method="POST" style="margin-top: 5px;">
+                    <input type="hidden" name="action" value="remove_photo">
+                    <button type="submit" class="btn-danger-soft">Remove Photo</button>
+                </form>
+                {% endif %}
+            </div>
+            <nav class="dash-nav">
+                <a href="#profile" class="active" onclick="showTab('profile')"><i class="far fa-user"></i> My Profile</a>
+                <a href="{{ url_for('user.orders') }}"><i class="fas fa-box"></i> My Orders</a>
+                <a href="{{ url_for('user.wishlist') }}"><i class="far fa-heart"></i> My Wishlist</a>
+                <a href="#addresses" onclick="showTab('addresses')"><i class="fas fa-map-marker-alt"></i> Saved Addresses</a>
+                <a href="#payments" onclick="showTab('payments')"><i class="fas fa-credit-card"></i> Payment Methods</a>
+                <a href="#settings" onclick="showTab('settings')"><i class="fas fa-cog"></i> Settings</a>
+                <a href="{{ url_for('user.logout') }}" style="color: #e74c3c;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-main">
+            <!-- Profile Tab -->
+            <div id="profile" class="dash-tab active">
+                <div class="dash-card">
+                    <h2>Personal Information</h2>
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="action" value="update_profile">
+                        <input type="file" name="profile_image" id="profile_image_input" style="display:none;" onchange="this.form.submit()">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" name="name" class="form-control" value="{{ user.name }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="tel" name="phone" class="form-control" value="{{ user.phone or '' }}" placeholder="+91 9876543210">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Delivery Address</label>
+                            <textarea name="address" class="form-control" rows="3">{{ user.address or '' }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary-lux">Save Profile</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Addresses Tab -->
+            <div id="addresses" class="dash-tab">
+                <div class="dash-card">
+                    <div class="card-header-flex">
+                        <h2>Saved Addresses</h2>
+                        <button class="btn btn-outline-gold btn-sm">+ Add New</button>
+                    </div>
+                    {% if user.address %}
+                    <div class="address-item active">
+                        <div class="address-type">DEFAULT</div>
+                        <p>{{ user.address }}</p>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No addresses saved yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payments Tab -->
+            <div id="payments" class="dash-tab">
+                <div class="dash-card">
+                    <h2>Payment Methods</h2>
+                    <div class="empty-payment-state">
+                        <i class="fas fa-credit-card"></i>
+                        <p>You haven't added any payment methods yet.</p>
+                        <button class="btn btn-outline-gold">Add Card</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings" class="dash-tab">
+                <div class="dash-card">
+                    <h2>Security & Settings</h2>
+                    <form method="POST">
+                        <input type="hidden" name="action" value="change_password">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Current Password</label>
+                                <input type="password" name="old_password" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <input type="password" name="new_password" class="form-control" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary-lux">Update Password</button>
+                    </form>
+
+                    <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--beige-accent);">
+
+                    <h3>Preferences</h3>
+                    <form method="POST">
+                        <input type="hidden" name="action" value="update_preferences">
+                        <div class="preference-item">
+                            <div>
+                                <strong>Email Notifications</strong>
+                                <p>Receive updates about orders and promotions</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" name="email_notif" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="preference-item">
+                            <div>
+                                <strong>SMS Updates</strong>
+                                <p>Get real-time shipping updates on your phone</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" name="sms_notif">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+function showTab(tabId) {
+    document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.dash-nav a').forEach(a => a.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+    
+    // Smooth scroll for anchors
+    if(tabId === 'settings' || tabId === 'profile') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+// Handle URL hash on load
+window.addEventListener('load', () => {
+    const hash = window.location.hash.substring(1);
+    if(hash && document.getElementById(hash)) {
+        showTab(hash);
+    }
+});
+</script>
+{% endblock %}

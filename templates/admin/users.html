@@ -1,0 +1,41 @@
+{% extends 'layout/base_admin.html' %}
+{% block title %}Users - Gemaura Admin{% endblock %}
+{% block content %}
+<div class="topbar">
+    <div class="topbar-title"><h1>Users</h1><p>All registered customers</p></div>
+</div>
+<div class="page-content">
+    <div class="card">
+        <div class="card-header">
+            <h3>👤 All Users ({{ users|length }})</h3>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div class="table-wrap">
+                <table class="dash-table">
+                    <thead>
+                        <tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td>#{{ u.user_id }}</td>
+                            <td><strong>{{ u.name }}</strong></td>
+                            <td>{{ u.email }}</td>
+                            <td>{{ u.phone or '—' }}</td>
+                            <td>{{ u.created_at.strftime('%b %d, %Y') }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.delete_user', user_id=u.user_id) }}"
+                                   class="btn btn-danger btn-sm"
+                                   onclick="return confirm('Delete this user?')">🗑️ Delete</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-light);">No users registered yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

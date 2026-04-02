@@ -1,0 +1,223 @@
+{% extends 'layout/base_user.html' %}
+{% block title %}Explore Reels - Gemaura{% endblock %}
+
+{% block body_class %}reels-page-body{% endblock %}
+
+{% block content %}
+<div class="reels-container" id="reels-container">
+    {% for reel in reels %}
+    <div class="reel-item">
+        <div class="reel-video-container">
+            <video src="{{ url_for('static', filename='reels/' + reel.video) }}" 
+                   loop muted playsinline class="reel-video"
+                   onclick="togglePlay(this)"></video>
+            
+            <!-- Side Actions -->
+            <div class="reel-actions-side">
+                <button class="reel-action-btn like-btn {% if session.user_id and reel.likes|selectattr('user_id', 'equalto', session.user_id)|list|length > 0 %}active{% endif %}" 
+                        onclick="handleLike({{ reel.reel_id }}, this)">
+                    <i class="fas fa-heart"></i>
+                    <span class="like-count">{{ reel.likes|length }}</span>
+                </button>
+                
+                <button class="reel-action-btn" onclick="openComments({{ reel.reel_id }})">
+                    <i class="fas fa-comment-dots"></i>
+                    <span>{{ reel.comments|length }}</span>
+                </button>
+                
+                <button class="reel-action-btn" onclick="shareReel({{ reel.reel_id }})">
+                    <i class="fas fa-share"></i>
+                </button>
+
+                {% if reel.product_id %}
+                <a href="{{ url_for('user.product_detail', product_id=reel.product_id) }}" class="reel-action-btn">
+                    <i class="fas fa-shopping-bag"></i>
+                </a>
+                {% endif %}
+                
+                <button class="reel-action-btn" onclick="toggleMute(this)">
+                    <i class="fas fa-volume-mute"></i>
+                </button>
+            </div>
+
+            <!-- Overlay Content -->
+            <div class="reel-overlay-content">
+                <div class="reel-info">
+                    <h4 class="reel-seller-tag">
+                        {% if reel.seller %}
+                            @{{ reel.seller.shop_name }}
+                        {% else %}
+                            @Gemaura_Official
+                        {% endif %}
+                    </h4>
+                    <p class="reel-caption">{{ reel.caption }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="reel-item">
+        <div class="empty-reels" style="text-align: center;">
+            <i class="fas fa-film" style="font-size: 4rem; color: var(--gold-primary); margin-bottom: 20px;"></i>
+            <h3>No reels available yet</h3>
+            <p>Check back soon for stunning jewellery masterpieces.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Simple Login Popup -->
+<div id="login-popup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.9); padding:30px; border-radius:15px; border:1px solid var(--gold-primary); z-index:9999; text-align:center; color:white; min-width:300px;">
+    <i class="fas fa-lock" style="font-size:30px; color:var(--gold-primary); margin-bottom:15px;"></i>
+    <h3>Login Required</h3>
+    <p>Please login to like or comment on reels.</p>
+    <div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+        <button onclick="document.getElementById('login-popup').style.display='none'" class="btn btn-outline-gold" style="padding:8px 20px;">Close</button>
+        <a href="{{ url_for('user.login') }}" class="btn btn-gold" style="padding:8px 20px;">Login</a>
+    </div>
+</div>
+
+<!-- Comments Drawer -->
+<div id="comments-drawer" class="comments-drawer" style="display:none; position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:500px; height:60vh; background:white; z-index:2001; border-radius:20px 20px 0 0; flex-direction:column; box-shadow:0 -10px 40px rgba(0,0,0,0.5); border-top: 1px solid var(--gold-primary);">
+    <div style="padding:20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; color:#111;">Comments</h3>
+        <button onclick="closeComments()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#666;">&times;</button>
+    </div>
+    <div id="comments-list" style="flex:1; overflow-y:auto; padding:20px; color:#333;">
+        <!-- Comments load here -->
+    </div>
+    <div style="padding:20px; border-top:1px solid #eee;">
+        <form onsubmit="submitComment(event)" style="display:flex; gap:10px;">
+            <input type="hidden" id="active-reel-id">
+            <input type="text" id="comment-input" placeholder="Add a comment..." required style="flex:1; padding:12px 20px; border-radius:25px; border:1px solid #ddd; outline:none;">
+            <button type="submit" style="background:var(--dark-luxury); color:white; border:none; width:45px; height:45px; border-radius:50%; cursor:pointer;">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+const isLoggedIn = document.body.getAttribute('data-logged-in') === 'true';
+
+function togglePlay(video) {
+    if (video.paused) {
+        video.play();
+    } else {
+        video.pause();
+    }
+}
+
+function toggleMute(btn) {
+    const video = btn.closest('.reel-video-container').querySelector('video');
+    video.muted = !video.muted;
+    btn.innerHTML = video.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+}
+
+function handleLike(reelId, btn) {
+    if (!isLoggedIn) {
+        document.getElementById('login-popup').style.display = 'block';
+        return;
+    }
+    
+    fetch(`/reel/like/${reelId}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+        btn.classList.toggle('active', data.liked);
+        btn.querySelector('.like-count').innerText = data.count;
+    });
+}
+
+function openComments(reelId) {
+    document.getElementById('active-reel-id').value = reelId;
+    const drawer = document.getElementById('comments-drawer');
+    drawer.style.display = 'flex';
+    
+    const list = document.getElementById('comments-list');
+    list.innerHTML = '<p style="text-align:center; padding:20px;">Loading comments...</p>';
+    
+    fetch(`/reel/comments/${reelId}`)
+    .then(r => r.json())
+    .then(data => {
+        list.innerHTML = '';
+        if (data.length === 0) {
+            list.innerHTML = '<p style="text-align:center; padding:40px; color:#999;">No comments yet. Be the first to admire!</p>';
+        } else {
+            data.forEach(c => {
+                list.innerHTML += `
+                    <div style="margin-bottom:20px; display:flex; gap:12px;">
+                        <div style="width:36px; height:36px; border-radius:50%; background:var(--gold-primary); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:14px;">
+                            ${c.user[0].toUpperCase()}
+                        </div>
+                        <div>
+                            <h5 style="margin:0 0 2px 0; font-size:14px;">${c.user}</h5>
+                            <p style="margin:0; font-size:14px; line-height:1.4;">${c.comment}</p>
+                            <span style="font-size:11px; color:#999;">${c.created_at}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    });
+}
+
+function closeComments() {
+    document.getElementById('comments-drawer').style.display = 'none';
+}
+
+function submitComment(e) {
+    e.preventDefault();
+    if (!isLoggedIn) {
+        document.getElementById('login-popup').style.display = 'block';
+        return;
+    }
+    
+    const reelId = document.getElementById('active-reel-id').value;
+    const input = document.getElementById('comment-input');
+    const formData = new FormData();
+    formData.append('comment', input.value);
+    
+    fetch(`/reel/comment/${reelId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            input.value = '';
+            openComments(reelId); // Refresh comments
+        }
+    });
+}
+
+function shareReel(reelId) {
+    const url = window.location.origin + '/reels?id=' + reelId;
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Reel link copied to clipboard!');
+    });
+}
+
+// Intersection Observer for auto-play/pause
+const observerOptions = {
+    threshold: 0.7
+};
+
+const reelObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        const video = entry.target.querySelector('video');
+        if (video) {
+            if (entry.isIntersecting) {
+                video.play().catch(e => console.log("Auto-play blocked"));
+            } else {
+                video.pause();
+                video.currentTime = 0;
+            }
+        }
+    });
+}, observerOptions);
+
+document.querySelectorAll('.reel-item').forEach(item => {
+    reelObserver.observe(item);
+});
+</script>
+{% endblock %}

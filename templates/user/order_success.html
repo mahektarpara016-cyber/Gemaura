@@ -1,0 +1,39 @@
+{% extends 'layout/base_user.html' %}
+{% block title %}Order Successful - Gemaura{% endblock %}
+{% block content %}
+<div class="container" style="padding: 80px 20px; text-align: center;">
+    <div style="max-width: 600px; margin: 0 auto; background: var(--white); border-radius: var(--radius-lg); padding: 48px; box-shadow: var(--shadow); border: 1px solid var(--beige-dark);">
+        <div style="width: 80px; height: 80px; background: #27ae60; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 24px auto; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);">
+            <i class="fas fa-check"></i>
+        </div>
+        
+        <h2 style="font-size: 32px; margin-bottom: 12px; color: var(--gold-dark);">Thank You for Your Royal Selection!</h2>
+        <p style="font-size: 16px; color: var(--text-light); margin-bottom: 32px;">Your order <strong>#GEM-{{ order.order_id }}</strong> has been placed successfully and is being prepared for shipment.</p>
+        
+        <div style="text-align: left; background: var(--checkout-bg); border-radius: var(--radius-md); padding: 24px; margin-bottom: 32px; border: 1px solid var(--card-border);">
+            <h4 style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); margin-bottom: 16px; border-bottom: 1px solid var(--beige-dark); padding-bottom: 8px;">Order Details</h4>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 15px;">
+                <span style="color: var(--text-light);">Delivery to:</span>
+                <span style="font-weight: 600;">{{ order.shipping_name }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 15px;">
+                <span style="color: var(--text-light);">Payment Method:</span>
+                <span style="font-weight: 600; text-transform: uppercase;">{{ order.payment_method }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-top: 16px; border-top: 1px dashed var(--beige-dark); padding-top: 16px;">
+                <span>Total Amount:</span>
+                <span style="color: var(--gold-dark);">₹{{ "%.0f"|format(order.total_price) }}</span>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 16px; justify-content: center;">
+            <a href="{{ url_for('user.orders') }}" class="btn btn-gold" style="padding: 12px 24px;">View My Orders</a>
+            <a href="{{ url_for('user.shop') }}" class="btn btn-outline-gold" style="padding: 12px 24px;">Continue Shopping</a>
+        </div>
+        
+        <p style="margin-top: 40px; font-size: 14px; color: var(--text-light);">
+            <i class="fas fa-envelope"></i> A confirmation email has been sent to your registered address.
+        </p>
+    </div>
+</div>
+{% endblock %}

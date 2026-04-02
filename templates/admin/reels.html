@@ -1,0 +1,49 @@
+{% extends 'layout/base_admin.html' %}
+{% block title %}Manage Reels - Gemaura Admin{% endblock %}
+{% block content %}
+<div class="topbar">
+    <div class="topbar-title"><h1>Manage Reels</h1><p>Monitor and moderate platform short videos</p></div>
+</div>
+<div class="page-content">
+    <div class="card">
+        <div class="card-body" style="padding:0;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Video</th>
+                        <th>Seller</th>
+                        <th>Caption</th>
+                        <th>Likes</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reel in reels %}
+                    <tr>
+                        <td>
+                            <video src="{{ url_for('static', filename='reels/' + reel.video) }}" style="height:80px; border-radius:4px;"></video>
+                        </td>
+                        <td>
+                            {% if reel.seller %}
+                            <span class="badge badge-info">{{ reel.seller.shop_name }}</span>
+                            {% else %}
+                            <span class="badge badge-gold">Admin</span>
+                            {% endif %}
+                        </td>
+                        <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis;">{{ reel.caption }}</td>
+                        <td><i class="fas fa-heart" style="color:#ff4757;"></i> {{ reel.likes|length }}</td>
+                        <td>{{ reel.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.delete_reel', reel_id=reel.reel_id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this reel?')">Delete</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" style="text-align:center; padding:30px;">No reels found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

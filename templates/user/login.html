@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Login - Gemaura</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+<div class="admin-auth-page">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <h2>GEMAURA</h2>
+            <div class="role">Customer Login</div>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="margin-bottom:16px;">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        <form method="POST">
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" name="email" class="form-control" placeholder="your@email.com" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="auth-submit">Sign In</button>
+        </form>
+        <p style="text-align:center;margin-top:20px;font-size:14px;color:var(--text-light);">
+            New to Gemaura? <a href="{{ url_for('user.register') }}" style="color:var(--gold-dark);font-weight:600;">Create Account</a>
+        </p>
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--beige-dark);display:flex;justify-content:center;gap:20px;font-size:13px;">
+            <a href="{{ url_for('seller.login') }}" style="color:var(--text-light);">Seller Login</a>
+            <a href="{{ url_for('admin.login') }}" style="color:var(--text-light);">Admin Login</a>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

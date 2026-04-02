@@ -1,0 +1,207 @@
+{% extends 'layout/base_seller.html' %}
+{% block title %}Upload Reel - Seller Panel{% endblock %}
+{% block page_title %}Upload Reel{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{{ url_for('seller.reels') }}" class="text-muted text-decoration-none small mb-2 d-inline-block">
+            <i class="fas fa-arrow-left me-1"></i> Back to Reels
+        </a>
+        <h2 class="h4 mb-1 text-dark fw-bold">Upload New Reel</h2>
+        <p class="text-muted mb-0">Engage customers with immersive video content.</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+        <div class="seller-card overflow-hidden">
+            <div class="row g-0 rounded min-vh-50">
+                <!-- Left: Video Preview (Mobile aspect ratio approx 9:16) -->
+                <div class="col-12 col-md-5 bg-dark position-relative d-flex align-items-center justify-content-center border-end" style="min-height: 500px;">
+                    <div id="uploadPlaceholder" class="text-center p-4 cursor-pointer" onclick="document.getElementById('reelVideo').click()">
+                        <div class="text-muted mb-3"><i class="fas fa-cloud-upload-alt fa-3x"></i></div>
+                        <h5 class="text-white mb-2">Select Video</h5>
+                        <p class="text-white-50 small mb-0">MP4 or MOV format<br>Recommended: 9:16 aspect ratio</p>
+                    </div>
+                    
+                    <video id="videoPreview" loop muted autoplay playsinline class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover d-none"></video>
+                    
+                    <button type="button" id="changeVideoBtn" class="btn btn-sm btn-dark bg-opacity-75 position-absolute top-0 end-0 m-3 d-none shadow-sm rounded-pill px-3" onclick="document.getElementById('reelVideo').click()" style="backdrop-filter: blur(4px);">
+                        <i class="fas fa-sync-alt me-1"></i> Change
+                    </button>
+                    
+                    <!-- Overlay decorative UI -->
+                    <div id="videoOverlayUI" class="position-absolute bottom-0 start-0 w-100 p-3 text-white d-none pointer-events-none" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-heart"></i>
+                            <i class="fas fa-comment ms-2"></i>
+                            <i class="fas fa-paper-plane ms-2"></i>
+                        </div>
+                        <p id="previewCaptionText" class="small mb-1 text-truncate">Caption preview...</p>
+                        <div id="previewProductTag" class="small d-inline-flex align-items-center rounded-pill bg-white bg-opacity-25 px-2 py-1 mt-1 border border-white border-opacity-25 d-none" style="backdrop-filter: blur(4px);">
+                            <i class="fas fa-shopping-bag me-1"></i> <span id="previewProductName">Product</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Form -->
+                <div class="col-12 col-md-7 p-4 p-xl-5 bg-white">
+                    <form method="POST" action="{{ url_for('seller.add_reel') }}" enctype="multipart/form-data" id="uploadForm">
+                        <input type="file" name="video" id="reelVideo" accept="video/mp4,video/quicktime" class="d-none" onchange="previewVideo(this)" required>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-muted fw-semibold small">Caption <span class="text-danger">*</span></label>
+                            <textarea name="caption" id="captionInput" class="seller-input" style="height: 120px; resize: none;" placeholder="Write a catchy caption for your jewellery reel..." required oninput="updatePreviewCaption(this.value)"></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-muted fw-semibold small">Tag a Product (Optional)</label>
+                            <select name="product_id" id="productSelect" class="seller-input" onchange="updatePreviewProduct(this)">
+                                <option value="none" data-name="">No Product Tagged</option>
+                                {% for product in products %}
+                                <option value="{{ product.product_id }}" data-name="{{ product.name }}">{{ product.name }} (₹{{ "{:,.0f}".format(product.price) }})</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted d-block mt-2"><i class="fas fa-info-circle me-1"></i>Users can click the tag to view and purchase the product directly.</small>
+                        </div>
+
+                        <div class="d-flex gap-3 mt-5">
+                            <button type="submit" id="submitBtn" class="btn btn-gold flex-grow-1 py-2">
+                                <i class="fas fa-paper-plane me-2"></i>Publish Reel
+                            </button>
+                            <a href="{{ url_for('seller.reels') }}" class="btn btn-light border text-muted py-2 px-4 hover-dark">Cancel</a>
+                        </div>
+                        
+                        <div id="uploadProgress" class="mt-4 d-none">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-gold fw-semibold">Uploading...</small>
+                                <small id="progressText" class="text-muted">0%</small>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div id="progressBar" class="progress-bar bg-gold progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cursor-pointer { cursor: pointer; }
+    .pointer-events-none { pointer-events: none; }
+    .object-fit-cover { object-fit: cover; }
+    .min-vh-50 { min-height: 50vh; }
+    .text-gold { color: var(--seller-gold); }
+    .bg-gold { background-color: var(--seller-gold); }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function previewVideo(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // Basic validation for video file
+            if (!file.type.match('video.*')) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid format',
+                    text: 'Please choose a valid video file (MP4, MOV).'
+                });
+                input.value = '';
+                return;
+            }
+            
+            // Check file size (e.g., max 50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File too large',
+                    text: 'Video size should be less than 50MB.'
+                });
+                input.value = '';
+                return;
+            }
+            
+            const url = URL.createObjectURL(file);
+            const video = document.getElementById('videoPreview');
+            const placeholder = document.getElementById('uploadPlaceholder');
+            const changeBtn = document.getElementById('changeVideoBtn');
+            const overlayUI = document.getElementById('videoOverlayUI');
+            
+            video.src = url;
+            video.classList.remove('d-none');
+            placeholder.classList.add('d-none');
+            changeBtn.classList.remove('d-none');
+            overlayUI.classList.remove('d-none');
+            
+            // Update initial caption
+            updatePreviewCaption(document.getElementById('captionInput').value);
+            
+            video.onloadedmetadata = () => {
+                video.play().catch(e => console.log('Auto-play blocked'));
+            };
+        }
+    }
+
+    function updatePreviewCaption(text) {
+        const preview = document.getElementById('previewCaptionText');
+        if(text.trim() === '') {
+            preview.innerText = 'Caption preview...';
+            preview.classList.add('text-white-50');
+        } else {
+            preview.innerText = text;
+            preview.classList.remove('text-white-50');
+        }
+    }
+    
+    function updatePreviewProduct(select) {
+        const option = select.options[select.selectedIndex];
+        const name = option.getAttribute('data-name');
+        const tag = document.getElementById('previewProductTag');
+        const nameSpan = document.getElementById('previewProductName');
+        
+        if(select.value === 'none' || !name) {
+            tag.classList.add('d-none');
+        } else {
+            nameSpan.innerText = name.length > 15 ? name.substring(0, 15) + '...' : name;
+            tag.classList.remove('d-none');
+        }
+    }
+
+    // Progress simulation on submit
+    document.getElementById('uploadForm').onsubmit = function() {
+        if (!document.getElementById('reelVideo').files[0]) {
+            Swal.fire('Please select a video', '', 'warning');
+            return false;
+        }
+        
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Uploading...';
+        
+        document.getElementById('uploadProgress').classList.remove('d-none');
+        
+        let progress = 0;
+        const bar = document.getElementById('progressBar');
+        const text = document.getElementById('progressText');
+        
+        const interval = setInterval(() => {
+            progress += Math.random() * 8;
+            if (progress > 95) {
+                progress = 95;
+                clearInterval(interval);
+            }
+            const width = Math.round(progress) + '%';
+            bar.style.width = width;
+            text.innerText = width;
+        }, 300);
+        
+        return true; // proceed with exact submit
+    };
+</script>
+{% endblock %}

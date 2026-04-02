@@ -1,0 +1,127 @@
+{% extends 'layout/base_user.html' %}
+{% block title %}Shop - Gemaura{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 48px; padding-bottom: 80px;">
+    <div class="section-header" style="text-align:left; margin-bottom:32px;">
+        <div class="section-label">{% if current_category %}Showing{% else %}Explore Our{% endif %}</div>
+        <h2>{% if current_category %}{{ current_category.category_name }} Collection{% else %}Jewellery Collection{% endif %}</h2>
+    </div>
+    <div class="shop-layout">
+        <!-- Filters Sidebar -->
+        <aside class="filter-sidebar">
+            <h3>Filters</h3>
+            <form method="GET" action="{{ url_for('user.shop') }}">
+                <div class="filter-group">
+                    <h5>Category</h5>
+                    <select name="category" class="form-control">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.category_id }}" {% if current_category and current_category.category_id == cat.category_id %}selected{% endif %}>{{ cat.category_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <h5>Sort By</h5>
+                    <select name="sort" class="form-control">
+                        <option value="newest" {% if sort=='newest'%}selected{% endif %}>Newest First</option>
+                        <option value="price_low" {% if sort=='price_low'%}selected{% endif %}>Price: Low to High</option>
+                        <option value="price_high" {% if sort=='price_high'%}selected{% endif %}>Price: High to Low</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <h5>Price Range (₹)</h5>
+                    <div class="price-range">
+                        <input type="number" name="min_price" placeholder="Min" value="{{ request.args.get('min_price','') }}" class="form-control">
+                        <span>–</span>
+                        <input type="number" name="max_price" placeholder="Max" value="{{ request.args.get('max_price','') }}" class="form-control">
+                    </div>
+                </div>
+                {% if q %}
+                <input type="hidden" name="q" value="{{ q }}">
+                {% endif %}
+                <button type="submit" class="filter-btn">Apply Filters</button>
+                <a href="{{ url_for('user.shop') }}" style="display:block;text-align:center;margin-top:10px;font-size:13px;color:var(--text-light);">Clear All</a>
+            </form>
+        </aside>
+
+        <!-- Product Grid -->
+        <div>
+            {% if q %}
+            <p style="margin-bottom:20px;color:var(--text-light);">Showing results for "<strong>{{ q }}</strong>" — {{ products|length }} items found</p>
+            {% else %}
+            <p style="margin-bottom:20px;color:var(--text-light);">{{ products|length }} products found</p>
+            {% endif %}
+
+            <!-- Skeleton Loader (Visible initially via JS if needed, but here as a placeholder) -->
+            <div id="loading-state" class="skeleton-container" style="display:none;">
+                <div class="loading-message">Loading latest jewellery collections...</div>
+                <div class="product-grid">
+                    {% for i in range(4) %}
+                    <div class="product-card skeleton" style="height: 380px;"></div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if products %}
+            <div class="product-grid">
+                {% for p in products %}
+                <div class="product-card reveal-on-scroll" style="--glow-color: var(--gold-primary);">
+                    <div class="product-img-wrap">
+                        <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}">
+                            {% if p.image %}
+                            <img src="{{ url_for('static', filename='uploads/' + p.image) }}" alt="{{ p.name }}" loading="lazy">
+                            {% else %}
+                            <img src="https://via.placeholder.com/400x400/F7F0E8/C9A84C?text=💍" alt="{{ p.name }}">
+                            {% endif %}
+                        </a>
+                        {% if p.is_new %}
+                        <div class="product-badge">NEW ARRIVAL</div>
+                        {% endif %}
+                        <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}" class="product-overlay">
+                            <span class="btn-view-luxury">View Details</span>
+                        </a>
+                        <button class="wishlist-btn-main wishlist-toggle-btn {% if p.product_id in wishlist_ids %}active{% endif %}" 
+                                data-product-id="{{ p.product_id }}" 
+                                title="Add to wishlist">
+                            <i class="{% if p.product_id in wishlist_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+                        </button>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-meta">
+                            <span class="product-category-label">{{ p.category.category_name }}</span>
+                            <div class="product-rating">
+                                <span class="stars" style="color:var(--gold-primary);">
+                                    {% set r = (p.avg_rating|default(4.5))|round|int %}
+                                    {% for i in range(5) %}{{ '★' if i < r else '☆' }}{% endfor %}
+                                </span>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('user.product_detail', product_id=p.product_id) }}" style="text-decoration:none;">
+                            <h3 class="product-name-title">{{ p.name }}</h3>
+                        </a>
+                        <div class="product-footer-row">
+                            <div class="price-wrap">
+                                <span class="price-actual" style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;">₹{{ "%.0f"|format(p.price|float) }}</span>
+                                <span class="price-old">₹{{ "%.0f"|format(p.price|float * 1.2) }}</span>
+                            </div>
+                            <button class="add-cart-icon-btn btn-primary-lux cart-btn-ajax" data-product-id="{{ p.product_id }}" title="Add to Bag">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">✨</div>
+                <h3>{% if current_category %}No pieces found in the {{ current_category.category_name }} Collection.{% else %}Collection Empty{% endif %}</h3>
+                <p>Our artisans are currently crafting new masterpieces. Please explore other categories or check back soon.</p>
+                <a href="{{ url_for('user.shop') }}" class="btn btn-primary-lux">Explore All Collections</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

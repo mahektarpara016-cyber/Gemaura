@@ -1,0 +1,602 @@
+{% extends 'layout/base_user.html' %}
+{% block title %}Secure Checkout | GEMAURA Luxury{% endblock %}
+{% block head %}
+<style>
+    :root {
+        --checkout-bg: #FDFBFA;
+        --card-bg: #ffffff;
+        --accent-gold: #C9A84C;
+        --accent-gold-soft: rgba(201, 168, 76, 0.08);
+        --text-main: #1A1A1A;
+        --text-muted: #666666;
+        --border-color: #EEEEEE;
+        --radius-premium: 16px;
+        --shadow-premium: 0 10px 30px rgba(0,0,0,0.04);
+    }
+
+    body { background-color: var(--checkout-bg); }
+
+    .checkout-header-banner {
+        padding: 40px 0 20px;
+        text-align: center;
+    }
+    .checkout-header-banner h1 {
+        font-family: 'Cinzel', serif;
+        font-size: 2.5rem;
+        color: var(--text-main);
+        letter-spacing: 4px;
+        margin-bottom: 8px;
+    }
+    .checkout-header-banner p {
+        color: var(--accent-gold);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .checkout-grid {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 40px;
+        align-items: start;
+        padding-bottom: 100px;
+    }
+
+    .checkout-section {
+        background: var(--card-bg);
+        border-radius: var(--radius-premium);
+        box-shadow: var(--shadow-premium);
+        border: 1px solid var(--border-color);
+        margin-bottom: 30px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+
+    .section-header {
+        padding: 24px 30px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .section-header .step-mark {
+        width: 32px;
+        height: 32px;
+        background: var(--accent-gold);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+    .section-header h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--text-main);
+    }
+
+    .section-body { padding: 30px; }
+
+    /* Address Selection */
+    .address-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    .address-card-luxury {
+        padding: 20px;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .address-card-luxury:hover { border-color: var(--accent-gold); }
+    .address-card-luxury.active {
+        border-color: var(--accent-gold);
+        background: var(--accent-gold-soft);
+    }
+    .address-card-luxury input { position: absolute; opacity: 0; }
+    
+    .addr-type {
+        font-size: 0.7rem;
+        background: var(--text-main);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 40px;
+        margin-bottom: 12px;
+        display: inline-block;
+        letter-spacing: 1px;
+    }
+    .addr-name { font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
+    .addr-full { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; }
+    .addr-phone { font-size: 0.9rem; margin-top: 10px; color: var(--text-main); font-weight: 500; }
+
+    /* Payment Methods */
+    .payment-grid { display: flex; flex-direction: column; gap: 15px; }
+    .payment-card-premium {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .payment-card-premium:hover { border-color: var(--accent-gold); }
+    .payment-card-premium.active {
+        border-color: var(--accent-gold);
+        background: var(--accent-gold-soft);
+    }
+    .payment-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fcfcfc;
+        border-radius: 10px;
+        margin-right: 20px;
+        font-size: 1.2rem;
+        color: var(--accent-gold);
+    }
+    .payment-info h4 { margin: 0; font-size: 0.95rem; font-weight: 600; }
+    .payment-info p { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
+
+    /* Summary Card (Right Side) */
+    .summary-sticky {
+        position: sticky;
+        top: 120px;
+        background: var(--text-main);
+        color: white;
+        border-radius: var(--radius-premium);
+        padding: 40px;
+    }
+    .summary-sticky h3 {
+        font-family: 'Cinzel', serif;
+        font-size: 1.5rem;
+        margin-bottom: 30px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 15px;
+    }
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        font-size: 0.95rem;
+        color: rgba(255,255,255,0.7);
+    }
+    .summary-row.total {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255,255,255,0.2);
+        color: white;
+        font-weight: 700;
+        font-size: 1.4rem;
+    }
+
+    .order-items-minimal {
+        margin-bottom: 30px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    .order-items-minimal::-webkit-scrollbar { width: 4px; }
+    .order-items-minimal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+    .minimal-item {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        align-items: center;
+    }
+    .minimal-item img { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); }
+    .minimal-item-info { flex: 1; }
+    .minimal-item-info h5 { font-size: 0.8rem; margin: 0; font-weight: 500; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+    .minimal-item-info span { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+
+    .place-order-btn {
+        width: 100%;
+        background: var(--accent-gold);
+        color: white;
+        border: none;
+        padding: 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: 2px;
+        margin-top: 30px;
+        cursor: pointer;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    .place-order-btn:hover { background: #B8963D; transform: translateY(-2px); }
+    .place-order-btn:active { transform: translateY(0); }
+    .place-order-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* Custom Form Controls */
+    .luxury-input {
+        width: 100%;
+        padding: 12px 0;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 1rem;
+        transition: all 0.3s;
+        outline: none;
+    }
+    .luxury-input:focus { border-bottom-color: var(--accent-gold); }
+
+    /* Processing Overlay */
+    #processing-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,255,255,0.95);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(5px);
+    }
+    .loader-gem {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 20px;
+        animation: pulse-gold 2s infinite;
+    }
+    @keyframes pulse-gold {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.7; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    @media (max-width: 992px) {
+        .checkout-grid { grid-template-columns: 1fr; }
+        .summary-sticky { position: static; margin-top: 40px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="processing-overlay">
+    <img src="{{ url_for('static', filename='images/logo.png') }}" class="loader-gem" alt="Loading...">
+    <h2 style="font-family:'Cinzel', serif; letter-spacing: 4px;">Preparing Your Luxury Handover</h2>
+    <p style="color:var(--accent-gold); text-transform:uppercase; font-size:0.8rem; letter-spacing:2px;">Securing your Gemaura moment...</p>
+</div>
+
+<div class="container">
+    <div class="checkout-header-banner">
+        <p>Boutique Checkout</p>
+        <h1>Secure Handover</h1>
+    </div>
+
+    <form id="order-form" action="{{ url_for('user.place_order') }}" method="POST">
+        <div class="checkout-grid">
+            <!-- Left: Transaction Steps -->
+            <div class="checkout-steps">
+                
+                <!-- 1. Identity -->
+                <div class="checkout-section">
+                    <div class="section-header">
+                        <div class="step-mark">1</div>
+                        <h3>Personal Account</h3>
+                        <i class="fas fa-check-circle" style="color:var(--accent-gold); margin-left:auto;"></i>
+                    </div>
+                    <div class="section-body" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:600; font-size:1.1rem;">{{ session.get('name') }}</div>
+                            <div style="color:var(--text-muted); font-size:0.9rem;">{{ session.get('email') }}</div>
+                        </div>
+                        <div style="font-size:0.8rem; color:var(--accent-gold); font-weight:600; text-transform:uppercase;">Verified Collector</div>
+                    </div>
+                </div>
+
+                <!-- 2. Destination -->
+                <div class="checkout-section">
+                    <div class="section-header">
+                        <div class="step-mark">2</div>
+                        <h3>Delivery Destination</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="address-grid" id="address-container">
+                            {% for addr in addresses %}
+                            <label class="address-card-luxury {% if addr.is_default %}active{% endif %}" data-id="{{ addr.address_id }}">
+                                <input type="radio" name="address_id" value="{{ addr.address_id }}" {% if addr.is_default %}checked{% endif %} required onchange="updateAddressUI(this)">
+                                <span class="addr-type">{{ addr.type or 'RESIDENCE' }}</span>
+                                <div class="addr-name">{{ addr.name }}</div>
+                                <div class="addr-phone">{{ addr.phone }}</div>
+                                <div class="addr-full">
+                                    {{ addr.full_address }},<br>
+                                    {{ addr.city }}, {{ addr.state }} - {{ addr.pincode }}
+                                </div>
+                                <div style="margin-top:15px; display:flex; gap:15px;">
+                                    <span class="btn-text" onclick="editAddress('{{ addr.address_id }}', '{{ addr.name|escape }}', '{{ addr.phone|escape }}', '{{ addr.pincode|escape }}', '{{ addr.city|escape }}', '{{ addr.state|escape }}', '{{ addr.full_address|escape }}')">Update</span>
+                                    {% if not addr.is_default %}
+                                    <a href="{{ url_for('user.delete_address', address_id=addr.address_id) }}" class="btn-text" style="color:#e74c3c;" onclick="return confirm('Remove address?')">Remove</a>
+                                    {% endif %}
+                                </div>
+                            </label>
+                            {% endfor %}
+                            
+                            <div class="address-card-luxury" style="border: 2px dashed var(--border-color); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:180px;" onclick="showAddAddress()">
+                                <i class="fas fa-plus-circle" style="font-size:2rem; color:var(--accent-gold); margin-bottom:10px;"></i>
+                                <span style="font-weight:600; font-size:0.9rem; color:var(--text-main);">Add New Destination</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Mini Inline Form (Initially Hidden) -->
+                        <div id="address-mini-form" style="display:none; margin-top:30px; padding-top:30px; border-top:1px solid var(--border-color);">
+                            <h4 id="addr-form-title" style="margin-bottom:20px; font-family:'Cinzel',serif;">New Destination Detail</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6"><input type="text" id="in_name" placeholder="Full Recipient Name" class="luxury-input"></div>
+                                <div class="col-md-6"><input type="tel" id="in_phone" placeholder="Contact Number" class="luxury-input"></div>
+                                <div class="col-md-4"><input type="text" id="in_pin" placeholder="Pincode" class="luxury-input"></div>
+                                <div class="col-md-4"><input type="text" id="in_city" placeholder="City" class="luxury-input"></div>
+                                <div class="col-md-4"><input type="text" id="in_state" placeholder="State" class="luxury-input"></div>
+                                <div class="col-12"><textarea id="in_full" placeholder="Ex: House No, Street, Landmark" class="luxury-input" rows="2"></textarea></div>
+                                <div class="col-12">
+                                    <div style="display:flex; gap:10px; margin-top:10px;">
+                                        <button type="button" class="btn btn-gold" onclick="saveNewAddress()">Secure Save</button>
+                                        <button type="button" class="btn btn-outline-gold" onclick="hideAddrForm()">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Method of Payment -->
+                <div class="checkout-section">
+                    <div class="section-header">
+                        <div class="step-mark">3</div>
+                        <h3>Payment Concierge</h3>
+                    </div>
+                    <div class="section-body">
+                        <div class="payment-grid">
+                            <label class="payment-card-premium active" onclick="updatePaymentUI(this)">
+                                <input type="radio" name="payment_method" value="cod" checked style="display:none;">
+                                <div class="payment-icon"><i class="fas fa-gem"></i></div>
+                                <div class="payment-info">
+                                    <h4>Handover Release (COD)</h4>
+                                    <p>Settle directly at the moment of discovery.</p>
+                                </div>
+                                <i class="fas fa-check-circle" style="margin-left:auto; color:var(--accent-gold);"></i>
+                            </label>
+                            
+                            <label class="payment-card-premium" onclick="updatePaymentUI(this)">
+                                <input type="radio" name="payment_method" value="upi" style="display:none;">
+                                <div class="payment-icon"><i class="fas fa-mobile-alt"></i></div>
+                                <div class="payment-info">
+                                    <h4>Instant Digital Transfer</h4>
+                                    <p>UPI, Google Pay, or PhonePe.</p>
+                                </div>
+                                <i class="fas fa-chevron-right" style="margin-left:auto; color:var(--border-color);"></i>
+                            </label>
+                            
+                            <label class="payment-card-premium" onclick="updatePaymentUI(this)">
+                                <input type="radio" name="payment_method" value="card" style="display:none;">
+                                <div class="payment-icon"><i class="fas fa-credit-card"></i></div>
+                                <div class="payment-info">
+                                    <h4>Corporate/Personal Credit</h4>
+                                    <p>Secure Visa, Mastercard, or Amex.</p>
+                                </div>
+                                <i class="fas fa-chevron-right" style="margin-left:auto; color:var(--border-color);"></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Special Requests -->
+                <div class="checkout-section">
+                    <div class="section-header">
+                        <div class="step-mark">4</div>
+                        <h3>Tailoring</h3>
+                    </div>
+                    <div class="section-body">
+                        <textarea name="order_notes" class="luxury-input" placeholder="Any bespoke requests, gifting notes, or concierge instructions?"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Summary & Command -->
+            <div class="checkout-summary">
+                <div class="summary-sticky">
+                    <h3>Summary</h3>
+                    
+                    <div class="order-items-minimal">
+                        {% for item in items %}
+                        <div class="minimal-item">
+                            {% if item.product.image %}
+                            <img src="{{ url_for('static', filename='uploads/' + item.product.image) }}" alt="Item">
+                            {% else %}
+                            <div style="width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:14px;">✦</div>
+                            {% endif %}
+                            <div class="minimal-item-info">
+                                <h5>{{ item.product.name }}</h5>
+                                <span>Qty: {{ item.quantity }}</span>
+                            </div>
+                            <div style="font-weight:600;">₹{{ "%.0f"|format(item.product.price * item.quantity) }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="summary-details">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span>₹{{ "%.0f"|format(subtotal) }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Boutique Delivery</span>
+                            <span style="color:var(--accent-gold);">{% if shipping_fee == 0 %}FREE{% else %}₹{{ "%.0f"|format(shipping_fee) }}{% endif %}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Craftsmanship Tax (3%)</span>
+                            <span>₹{{ "%.0f"|format(tax) }}</span>
+                        </div>
+                        <div class="summary-row" id="coupon-row" style="display:none; color:var(--accent-gold);">
+                            <span>Privilege Credit</span>
+                            <span id="display-coupon">-₹0</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Investment Total</span>
+                            <span id="display-total">₹{{ "%.0f"|format(total) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Privilege Codes -->
+                    <div style="margin-top:40px;">
+                        <div style="display:flex; gap:10px;">
+                            <input type="text" id="voucher-code" placeholder="Privilege Code" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; padding:12px; border-radius:8px; font-size:0.8rem; outline:none;">
+                            <button type="button" class="btn btn-gold" style="padding:10px 20px; border-radius:8px;" onclick="applyVoucher()">Claim</button>
+                        </div>
+                        <div id="voucher-display" style="margin-top:15px; display:flex; flex-wrap:wrap; gap:10px;"></div>
+                    </div>
+
+                    <button type="submit" class="place-order-btn" id="submit-btn" onclick="showProcessing()">
+                        COMPLETE ACQUISITION <i class="fas fa-crown"></i>
+                    </button>
+                    
+                    <div style="margin-top:20px; text-align:center; font-size:0.7rem; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:1px;">
+                        <i class="fas fa-shield-alt"></i> Secured by Gemaura Vault
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <input type="hidden" name="shipping_fee" id="hidden-shipping" value="{{ shipping_fee }}">
+        <input type="hidden" name="tax" id="hidden-tax" value="{{ tax }}">
+        <input type="hidden" name="discount_amount" id="hidden-discount" value="0">
+        <input type="hidden" name="coupon_id" id="hidden-coupon-id" value="">
+    </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentSubtotal = parseFloat("{{ subtotal }}") || 0;
+    let currentShipping = parseFloat("{{ shipping_fee }}") || 0;
+    let currentTax = parseFloat("{{ tax }}") || 0;
+    let couponDiscount = 0;
+
+    function updateAddressUI(radio) {
+        document.querySelectorAll('.address-card-luxury').forEach(card => card.classList.remove('active'));
+        radio.closest('.address-card-luxury').classList.add('active');
+    }
+
+    function updatePaymentUI(label) {
+        document.querySelectorAll('.payment-card-premium').forEach(card => {
+            card.classList.remove('active');
+            card.querySelector('i.fa-check-circle')?.remove();
+            let chevron = document.createElement('i');
+            chevron.className = 'fas fa-chevron-right';
+            chevron.style.marginLeft = 'auto';
+            chevron.style.color = 'var(--border-color)';
+            if (!card.querySelector('.fa-chevron-right')) card.appendChild(chevron);
+        });
+        
+        label.classList.add('active');
+        label.querySelector('.fa-chevron-right')?.remove();
+        let check = document.createElement('i');
+        check.className = 'fas fa-check-circle';
+        check.style.marginLeft = 'auto';
+        check.style.color = 'var(--accent-gold)';
+        label.appendChild(check);
+        label.querySelector('input').checked = true;
+    }
+
+    function showAddAddress() {
+        document.getElementById('addr-form-title').innerText = "New Destination Detail";
+        document.getElementById('address-mini-form').style.display = 'block';
+        document.getElementById('address-mini-form').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function editAddress(id, name, phone, pin, city, state, full) {
+        document.getElementById('addr-form-title').innerText = "Update Destination";
+        document.getElementById('in_name').value = name;
+        document.getElementById('in_phone').value = phone;
+        document.getElementById('in_pin').value = pin;
+        document.getElementById('in_city').value = city;
+        document.getElementById('in_state').value = state;
+        document.getElementById('in_full').value = full;
+        document.getElementById('address-mini-form').style.display = 'block';
+        document.getElementById('address-mini-form').scrollIntoView({ behavior: 'smooth' });
+        // Handle actual saving would need another logic or updating form action
+    }
+
+    function hideAddrForm() { document.getElementById('address-mini-form').style.display = 'none'; }
+
+    async function applyVoucher() {
+        const code = document.getElementById('voucher-code').value.trim();
+        if (!code) return;
+
+        Swal.fire({
+            title: 'Validating Code...',
+            didOpen: () => { Swal.showLoading() },
+            allowOutsideClick: false
+        });
+
+        try {
+            const response = await fetch("{{ url_for('user.apply_coupon') }}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: code, subtotal: currentSubtotal })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                couponDiscount = data.discount;
+                document.getElementById('hidden-coupon-id').value = data.coupon_id;
+                document.getElementById('hidden-discount').value = couponDiscount;
+                
+                document.getElementById('coupon-row').style.display = 'flex';
+                document.getElementById('display-coupon').innerText = "-₹" + couponDiscount.toFixed(0);
+                
+                calculateFinal();
+                Swal.fire('Privilege Applied!', data.message, 'success');
+                addVoucherBadge(code);
+                document.getElementById('voucher-code').value = '';
+            } else {
+                Swal.fire('Invalid Code', data.message || 'Check your code.', 'error');
+            }
+        } catch (err) {
+            Swal.fire('Error', 'Unable to connect to Gemaura Vault.', 'error');
+        }
+    }
+
+    function addVoucherBadge(code) {
+        const wrap = document.getElementById('voucher-display');
+        wrap.innerHTML = `<span class="badge" style="background:var(--accent-gold); color:white; padding:8px 15px; border-radius:20px; font-size:0.7rem; letter-spacing:1px;">CODE: ${code} <i class="fas fa-times" style="margin-left:8px; cursor:pointer;" onclick="removeVoucher()"></i></span>`;
+    }
+
+    function removeVoucher() {
+        couponDiscount = 0;
+        document.getElementById('hidden-coupon-id').value = "";
+        document.getElementById('hidden-discount').value = "0";
+        document.getElementById('coupon-row').style.display = 'none';
+        document.getElementById('voucher-display').innerHTML = '';
+        calculateFinal();
+    }
+
+    function calculateFinal() {
+        const total = currentSubtotal + currentShipping + currentTax - couponDiscount;
+        document.getElementById('display-total').innerText = "₹" + Math.max(0, total).toFixed(0);
+    }
+
+    function showProcessing() {
+        if (!document.getElementById('order-form').checkValidity()) return;
+        document.getElementById('processing-overlay').style.display = 'flex';
+        document.getElementById('submit-btn').disabled = true;
+    }
+</script>
+{% endblock %}

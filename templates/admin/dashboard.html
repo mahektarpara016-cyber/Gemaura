@@ -1,0 +1,417 @@
+{% extends 'layout/base_admin.html' %}
+{% block title %}Admin Dashboard - Gemaura Analytics{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== PAGE HEADER ===== -->
+<div class="dash-page-header">
+    <div class="dash-page-title">
+        <h1>📊 Analytics Dashboard</h1>
+        <p>Real-time platform performance &amp; financial overview</p>
+    </div>
+    <div class="dash-filter-bar">
+        <a href="?filter=today"  class="dash-filter-btn {% if filter_type == 'today' %}active{% endif %}">Today</a>
+        <a href="?filter=week"   class="dash-filter-btn {% if filter_type == 'week' %}active{% endif %}">This Week</a>
+        <a href="?filter=month"  class="dash-filter-btn {% if filter_type == 'month' %}active{% endif %}">This Month</a>
+        <a href="?filter=all"    class="dash-filter-btn {% if filter_type == 'all' %}active{% endif %}">Lifetime</a>
+    </div>
+</div>
+
+<!-- ===== STAT CARDS ===== -->
+<div class="stats-grid-premium">
+
+    <div class="stat-card-premium" style="--card-accent:#D4AF37;">
+        <div class="stat-icon-box gold">
+            <span style="font-size:22px;">₹</span>
+        </div>
+        <div class="stat-body">
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-value count-up" data-target="{{ total_revenue|float|int }}">₹0</div>
+            <span class="stat-change neutral"><i class="fas fa-infinity" style="font-size:10px;"></i> All orders</span>
+        </div>
+    </div>
+
+    <div class="stat-card-premium" style="--card-accent:#22C55E;">
+        <div class="stat-icon-box green">
+            <i class="fas fa-arrow-trend-up" style="color:#22C55E;font-size:22px;"></i>
+        </div>
+        <div class="stat-body">
+            <div class="stat-label">Admin Profit</div>
+            <div class="stat-value count-up" data-target="{{ total_admin_profit|float|int }}">₹0</div>
+            <span class="stat-change up"><i class="fas fa-caret-up"></i> Commission</span>
+        </div>
+    </div>
+
+    <div class="stat-card-premium" style="--card-accent:#EF4444;">
+        <div class="stat-icon-box red">
+            <i class="fas fa-arrow-trend-down" style="color:#EF4444;font-size:22px;"></i>
+        </div>
+        <div class="stat-body">
+            <div class="stat-label">Total Loss</div>
+            <div class="stat-value count-up" data-target="{{ total_loss|float|int }}">₹0</div>
+            <span class="stat-change down"><i class="fas fa-caret-down"></i> Refunds &amp; cancels</span>
+        </div>
+    </div>
+
+    <div class="stat-card-premium" style="--card-accent:#6366F1;">
+        <div class="stat-icon-box blue">
+            <i class="fas fa-chart-line" style="color:#6366F1;font-size:22px;"></i>
+        </div>
+        <div class="stat-body">
+            <div class="stat-label">Net Profit</div>
+            <div class="stat-value count-up" data-target="{{ net_profit|float|int }}">₹0</div>
+            <span class="stat-change {% if net_profit > 0 %}up{% elif net_profit < 0 %}down{% else %}neutral{% endif %}">
+                <i class="fas fa-caret-{{ 'up' if net_profit > 0 else 'down' if net_profit < 0 else 'right' }}"></i>
+                Profit − Loss
+            </span>
+        </div>
+    </div>
+
+    <div class="stat-card-premium" style="--card-accent:#A855F7;">
+        <div class="stat-icon-box purple">
+            <i class="fas fa-shopping-bag" style="color:#A855F7;font-size:22px;"></i>
+        </div>
+        <div class="stat-body">
+            <div class="stat-label">Total Orders</div>
+            <div class="stat-value count-up" data-target="{{ total_orders }}" data-prefix="">{{ total_orders }}</div>
+            <span class="stat-change neutral"><i class="fas fa-clock" style="font-size:10px;"></i> All time</span>
+        </div>
+    </div>
+
+    <div class="stat-card-premium" style="--card-accent:#0EA5E9;">
+        <div class="stat-icon-box" style="background:rgba(14,165,233,0.12);">
+            <i class="fas fa-users" style="color:#0EA5E9;font-size:22px;"></i>
+        </div>
+        <div class="stat-body">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value">{{ total_users }}</div>
+            <span class="stat-change up"><i class="fas fa-store" style="font-size:10px;"></i> {{ total_sellers }} sellers</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===== CHARTS ROW ===== -->
+<div class="dash-grid-2">
+
+    <!-- Revenue Line Chart -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <div class="dash-card-title"><i class="fas fa-chart-area"></i> Revenue & Profit Trend</div>
+            <span class="stat-change neutral" style="font-size:11.5px;">
+                <i class="fas fa-calendar" style="font-size:10px;"></i>&nbsp;{{ filter_type.title() }}
+            </span>
+        </div>
+        <div class="dash-card-chart">
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Sellers -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <div class="dash-card-title"><i class="fas fa-trophy"></i> Top Sellers</div>
+            <a href="{{ url_for('admin.sellers') }}" class="dash-card-action">View all →</a>
+        </div>
+        <div class="dash-card-body">
+            {% if top_sellers %}
+            <ul class="top-list-premium">
+                {% for s in top_sellers %}
+                <li class="top-list-item">
+                    <div class="item-rank {% if loop.index == 1 %}gold-rank{% endif %}">{{ loop.index }}</div>
+                    <div>
+                        <div class="item-name">{{ s.shop_name }}</div>
+                    </div>
+                    <div class="item-value gold">₹{{ "{:,.0f}".format(s.total_sales) }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-store"></i><p>No seller sales data yet.</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- ===== SECOND ROW ===== -->
+<div class="dash-grid-2b">
+
+    <!-- Orders Bar Chart -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <div class="dash-card-title"><i class="fas fa-chart-bar"></i> Profit vs Loss</div>
+        </div>
+        <div class="dash-card-chart">
+            <div class="chart-container">
+                <canvas id="profitLossChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <div class="dash-card-title"><i class="fas fa-gem"></i> Top Products</div>
+            <a href="{{ url_for('admin.products') }}" class="dash-card-action">View all →</a>
+        </div>
+        <div class="dash-card-body">
+            {% if top_products %}
+            <ul class="top-list-premium">
+                {% for p in top_products %}
+                <li class="top-list-item">
+                    <div class="item-rank {% if loop.index == 1 %}gold-rank{% endif %}">{{ loop.index }}</div>
+                    <div>
+                        <div class="item-name">{{ p.name }}</div>
+                    </div>
+                    <div class="item-value">{{ p.total_sold }} <span style="font-size:11px;color:var(--text-muted);">sold</span></div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-gem"></i><p>No product sales yet.</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- ===== PENDING SELLERS ===== -->
+<div class="dash-card" style="margin-bottom:24px;">
+    <div class="dash-card-header">
+        <div class="dash-card-title">
+            <i class="fas fa-clock" style="color:#D97706;"></i> 
+            Pending Seller Approvals
+            {% if pending_sellers %}
+            <span style="background:#FFFBEB;color:#D97706;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid #FDE68A;">{{ pending_sellers|length }}</span>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('admin.sellers') }}" class="dash-card-action">Manage Sellers →</a>
+    </div>
+    {% if pending_sellers %}
+    <div class="table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr>
+                    <th>Shop Name</th>
+                    <th>Email</th>
+                    <th>Registered</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in pending_sellers %}
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:36px;height:36px;border-radius:10px;background:rgba(212,175,55,0.12);display:flex;align-items:center;justify-content:center;font-weight:700;color:#D4AF37;font-size:15px;">{{ s.shop_name[0].upper() }}</div>
+                            <strong>{{ s.shop_name }}</strong>
+                        </div>
+                    </td>
+                    <td style="color:var(--text-muted);">{{ s.email }}</td>
+                    <td style="color:var(--text-muted);font-size:12px;">{{ s.created_at.strftime('%d %b %Y') if s.created_at else '—' }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.approve_seller', seller_id=s.seller_id) }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-check"></i> Approve
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fas fa-check-circle" style="color:#22C55E;opacity:0.5;"></i><p>No pending approvals. All sellers are verified!</p></div>
+    {% endif %}
+</div>
+
+<!-- ===== RECENT ORDERS ===== -->
+<div class="dash-card">
+    <div class="dash-card-header">
+        <div class="dash-card-title"><i class="fas fa-shopping-bag"></i> Recent Orders</div>
+        <a href="{{ url_for('admin.orders') }}" class="dash-card-action">View all orders →</a>
+    </div>
+    {% if recent_orders %}
+    <div class="table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Profit</th>
+                    <th>Loss</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in recent_orders %}
+                <tr>
+                    <td><strong style="color:var(--gold-dark);">#GEM-{{ o.order_id }}</strong></td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:28px;height:28px;border-radius:8px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-muted);">
+                                {{ o.user.name[0].upper() if o.user else '?' }}
+                            </div>
+                            {{ o.user.name if o.user else 'Guest' }}
+                        </div>
+                    </td>
+                    <td><strong>₹{{ "{:,.0f}".format(o.total_price) }}</strong></td>
+                    <td>
+                        <span class="status-badge status-{{ o.status|lower }}">{{ o.status.title() }}</span>
+                    </td>
+                    <td>
+                        {% if o.status|lower != 'cancelled' %}
+                        <span style="color: #22C55E; font-weight: 600;">+₹{{ "{:,.0f}".format(o.total_admin_commission) }}</span>
+                        {% else %}
+                        <span style="color: var(--text-muted);">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if o.status|lower == 'cancelled' and o.payment_status|lower in ['paid', 'paid (simulation)', 'completed'] %}
+                        <span style="color: #EF4444; font-weight: 600;">-₹{{ "{:,.0f}".format(o.total_price) }}</span>
+                        {% elif o.status|lower == 'cancelled' %}
+                        <span style="color: var(--text-muted); font-size: 12px;">(No paid loss)</span>
+                        {% else %}
+                        <span style="color: var(--text-muted);">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><i class="fas fa-shopping-bag"></i><p>No orders yet. They'll appear here once customers start ordering.</p></div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ===== COUNT-UP ANIMATION =====
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.count-up').forEach(function (el) {
+        const target = parseInt(el.dataset.target) || 0;
+        const prefix = el.dataset.prefix !== undefined ? el.dataset.prefix : '₹';
+        const duration = 1200;
+        const step = target / (duration / 16);
+        let current = 0;
+        const timer = setInterval(function () {
+            current += step;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            el.textContent = prefix + Math.floor(current).toLocaleString('en-IN');
+        }, 16);
+    });
+
+    // ===== REVENUE & PROFIT LINE CHART =====
+    const labels = {{ chart_labels | tojson | safe }};
+    const revData = {{ chart_revenue | tojson | safe }};
+    const profData = {{ chart_profit | tojson | safe }};
+    const lossData = {{ chart_loss | tojson | safe }};
+
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: labels.length ? labels : ['No Data'],
+            datasets: [
+                {
+                    label: 'Revenue',
+                    data: revData.length ? revData : [0],
+                    borderColor: '#D4AF37',
+                    backgroundColor: 'rgba(212,175,55,0.08)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#D4AF37',
+                    pointRadius: 4,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Profit',
+                    data: profData.length ? profData : [0],
+                    borderColor: '#22C55E',
+                    backgroundColor: 'rgba(34,197,94,0.06)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#22C55E',
+                    pointRadius: 3,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Loss',
+                    data: lossData.length ? lossData : [0],
+                    borderColor: '#EF4444',
+                    backgroundColor: 'rgba(239,68,68,0.05)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#EF4444',
+                    pointRadius: 3,
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 }, usePointStyle: true, padding: 16 } }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { font: { family: 'Inter', size: 11 }, callback: v => '₹' + v.toLocaleString('en-IN') } },
+                x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } }
+            }
+        }
+    });
+
+    // ===== PROFIT vs LOSS BAR CHART =====
+    const plCtx = document.getElementById('profitLossChart').getContext('2d');
+    new Chart(plCtx, {
+        type: 'bar',
+        data: {
+            labels: labels.length ? labels : ['No Data'],
+            datasets: [
+                {
+                    label: 'Profit',
+                    data: profData.length ? profData : [0],
+                    backgroundColor: 'rgba(34,197,94,0.75)',
+                    borderRadius: 6,
+                    borderSkipped: false
+                },
+                {
+                    label: 'Loss',
+                    data: lossData.length ? lossData : [0],
+                    backgroundColor: 'rgba(239,68,68,0.7)',
+                    borderRadius: 6,
+                    borderSkipped: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 }, usePointStyle: true, padding: 16 } }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { font: { family: 'Inter', size: 11 }, callback: v => '₹' + v.toLocaleString('en-IN') } },
+                x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

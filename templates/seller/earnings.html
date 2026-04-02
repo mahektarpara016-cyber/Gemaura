@@ -1,0 +1,120 @@
+{% extends 'layout/base_seller.html' %}
+{% block title %}Earnings - Seller Panel{% endblock %}
+{% block page_title %}Earnings & Payouts{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-1 text-dark fw-bold">Earnings Overview</h2>
+        <p class="text-muted mb-0">Track your store's financial performance and net profit.</p>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card p-3 border-start border-4 rounded" style="border-left-color: #D4AF37 !important;">
+            <div class="stat-icon gold bg-opacity-10 rounded">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-details">
+                <p class="mb-1 text-muted small fw-semibold text-uppercase">Total Sales</p>
+                <h3 class="mb-1 text-dark fs-4">₹{{ "{:,.0f}".format(summary.total_sales or 0) }}</h3>
+                <small class="text-success"><i class="fas fa-arrow-up me-1"></i>Gross Revenue</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card p-3 border-start border-4 rounded" style="border-left-color: #2ecc71 !important;">
+            <div class="stat-icon green bg-opacity-10 rounded">
+                <i class="fas fa-hand-holding-usd"></i>
+            </div>
+            <div class="stat-details">
+                <p class="mb-1 text-muted small fw-semibold text-uppercase">Seller Earnings</p>
+                <h3 class="mb-1 text-dark fs-4">₹{{ "{:,.0f}".format(summary.total_profit or 0) }}</h3>
+                <small class="text-success">After Commission</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card p-3 border-start border-4 rounded" style="border-left-color: #e74c3c !important;">
+            <div class="stat-icon red bg-opacity-10 rounded">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="stat-details">
+                <p class="mb-1 text-muted small fw-semibold text-uppercase">Total Loss</p>
+                <h3 class="mb-1 text-dark fs-4">₹{{ "{:,.0f}".format(summary.total_loss or 0) }}</h3>
+                <small class="text-danger">Cancelled Orders</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="stat-card p-3 border-start border-4 rounded" style="border-left-color: #3498db !important;">
+            <div class="stat-icon blue bg-opacity-10 rounded">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="stat-details">
+                <p class="mb-1 text-muted small fw-semibold text-uppercase">Net Earnings</p>
+                <h3 class="mb-1 text-dark fs-4">₹{{ "{:,.0f}".format(summary.net_earnings or 0) }}</h3>
+                <small class="text-primary">Final Payout</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="seller-card">
+    <div class="seller-card-header">
+        <h5 class="seller-card-title m-0 h6">Transaction History</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="seller-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Total Value</th>
+                    <th>Earnings</th>
+                    <th>Loss</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if earnings_data %}
+                    {% for item in earnings_data %}
+                    <tr>
+                        <td class="fw-semibold text-dark">#{{ item.order_id }}</td>
+                        <td class="text-muted"><i class="far fa-calendar-alt me-1"></i> {{ item.date.strftime('%d %b, %Y') }}</td>
+                        <td class="fw-medium text-dark">₹{{ "{:,.0f}".format(item.total) }}</td>
+                        <td class="text-success fw-bold">+₹{{ "{:,.0f}".format(item.profit) }}</td>
+                        <td class="text-danger fw-bold">
+                            {% if item.loss > 0 %}
+                                -₹{{ "{:,.0f}".format(item.loss) }}
+                            {% else %}
+                                ₹0
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set status_class = 'badge-pending' %}
+                            {% if item.status == 'processing' %}{% set status_class = 'badge-processing' %}
+                            {% elif item.status == 'shipped' %}{% set status_class = 'badge-shipped' %}
+                            {% elif item.status == 'delivered' %}{% set status_class = 'badge-delivered' %}
+                            {% elif item.status == 'cancelled' %}{% set status_class = 'badge-cancelled' %}
+                            {% endif %}
+                            <span class="badge-status {{ status_class }}">{{ item.status }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <div class="text-muted mb-3 opacity-50"><i class="fas fa-receipt fa-3x"></i></div>
+                            <h5 class="fw-semibold text-dark mb-1">No Transactions Yet</h5>
+                            <p class="text-muted small">Your order earnings and deductions will appear here.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

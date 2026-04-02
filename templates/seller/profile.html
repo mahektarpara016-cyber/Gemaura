@@ -1,0 +1,134 @@
+{% extends 'layout/base_seller.html' %}
+{% block title %}My Profile - Seller Panel{% endblock %}
+{% block page_title %}Profile Settings{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <!-- Left Column: WhatsApp-style Profile Card -->
+    <div class="col-12 col-xl-4 mb-4">
+        <div class="seller-card h-100 position-relative">
+            <!-- Decorative Header Background -->
+            <div class="position-absolute top-0 start-0 w-100 bg-gold bg-opacity-10" style="height: 120px; border-radius: 8px 8px 0 0;"></div>
+            
+            <div class="seller-card-body text-center pt-5 mt-4 position-relative z-1">
+                <div class="position-relative d-inline-block mb-3">
+                    {% if seller.logo and seller.logo != 'None' and seller.logo != '' %}
+                    <img src="{{ url_for('static', filename='uploads/profiles/' + seller.logo) }}" class="rounded-circle border border-4 border-white shadow-sm object-fit-cover" style="width: 140px; height: 140px;" alt="Profile Info">
+                    {% else %}
+                    <div class="rounded-circle border border-4 border-white shadow-sm bg-gold text-white d-flex align-items-center justify-content-center fw-bold" style="width: 140px; height: 140px; font-size: 56px;">
+                        {{ (seller.shop_name or 'S')[0] | upper }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow-sm border border-light cursor-pointer d-flex align-items-center justify-content-center hover-gold transition-all" style="width: 40px; height: 40px;" onclick="document.getElementById('logo_input').click()" title="Change Logo">
+                        <i class="fas fa-camera text-gold"></i>
+                    </div>
+                    
+                    <form id="logoForm" method="POST" enctype="multipart/form-data" class="d-none">
+                        <input type="hidden" name="action" value="update_profile">
+                        <input type="file" name="logo" id="logo_input" accept="image/*" onchange="document.getElementById('logoForm').submit()">
+                    </form>
+                </div>
+
+                <h3 class="h4 mb-1 text-dark fw-bold">{{ seller.shop_name }}</h3>
+                <p class="text-muted small mb-3">{{ seller.email }}</p>
+                
+                <div class="mb-4">
+                    {% set status_class = 'badge-active' %}
+                    {% if seller.status == 'pending' %}{% set status_class = 'badge-pending' %}{% endif %}
+                    {% if seller.status == 'suspended' %}{% set status_class = 'badge-cancelled' %}{% endif %}
+                    <span class="badge-status {{ status_class }} px-3 py-2">{{ seller.status|upper }}</span>
+                </div>
+
+                <div class="text-start bg-light p-3 rounded-3 mb-4 border">
+                    <h6 class="text-uppercase text-muted small fw-bold mb-2" style="letter-spacing: 0.5px;">About</h6>
+                    <p class="text-dark small mb-0 lh-base">{{ seller.bio or "Hey there! I am selling on Gemaura." }}</p>
+                </div>
+                
+                {% if seller.logo and seller.logo != 'None' and seller.logo != '' %}
+                <form method="POST">
+                    <input type="hidden" name="action" value="remove_photo">
+                    <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill">
+                        <i class="fas fa-trash-alt me-1"></i> Remove Logo
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Settings Forms -->
+    <div class="col-12 col-xl-8">
+        <!-- Store Information -->
+        <div class="seller-card mb-4">
+            <div class="seller-card-header">
+                <h5 class="seller-card-title m-0 h6"><i class="fas fa-store me-2 text-gold"></i>Store Information</h5>
+            </div>
+            <div class="seller-card-body">
+                <form method="POST">
+                    <input type="hidden" name="action" value="update_profile">
+                    
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold small">Shop Name <span class="text-danger">*</span></label>
+                            <input type="text" name="shop_name" class="seller-input" value="{{ seller.shop_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold small">Registered Email <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="seller-input bg-light" value="{{ seller.email }}" readonly title="Contact support to change email">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label text-muted fw-semibold small">Shop Bio</label>
+                            <textarea name="bio" class="seller-input" rows="4" placeholder="Tell customers about your story and craftsmanship...">{{ seller.bio or '' }}</textarea>
+                            <div class="form-text mt-2 text-muted small">This will be visible on your public seller profile page.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-gold px-4 py-2">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Security & Password -->
+        <div class="seller-card">
+            <div class="seller-card-header">
+                <h5 class="seller-card-title m-0 h6"><i class="fas fa-shield-alt me-2 text-gold"></i>Security & Password</h5>
+            </div>
+            <div class="seller-card-body">
+                <form method="POST">
+                    <input type="hidden" name="action" value="change_password">
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold small">Current Password <span class="text-danger">*</span></label>
+                            <input type="password" name="old_password" class="seller-input" placeholder="••••••••" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold small">New Password <span class="text-danger">*</span></label>
+                            <input type="password" name="new_password" class="seller-input" placeholder="Minimum 8 characters" required minlength="8">
+                        </div>
+                        <div class="col-12">
+                            <p class="text-muted small mt-1 mb-3"><i class="fas fa-info-circle me-1"></i>Ensure your new password differs from your previous one and is not easy to guess.</p>
+                            <button type="submit" class="btn btn-dark px-4 py-2 hover-gold text-nowrap w-100 w-md-auto">
+                                <i class="fas fa-key me-2"></i>Update Password
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cursor-pointer { cursor: pointer; }
+    .object-fit-cover { object-fit: cover; }
+    .bg-gold { background-color: var(--seller-gold); }
+    .text-gold { color: var(--seller-gold); }
+    .hover-gold:hover { color: var(--seller-gold) !important; border-color: var(--seller-gold) !important; }
+</style>
+{% endblock %}

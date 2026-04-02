@@ -1,0 +1,33 @@
+{% extends 'layout/base_user.html' %}
+{% block title %}Contact - Gemaura{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:64px;padding-bottom:80px;max-width:700px;">
+    <div class="section-header" style="text-align:left;margin-bottom:40px;">
+        <div class="section-label">Get In Touch</div>
+        <h2>Contact Us</h2>
+        <div class="divider" style="margin:16px 0;"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;">
+        <div style="background:var(--white);border-radius:var(--radius-lg);padding:36px;box-shadow:var(--shadow);border:1px solid var(--beige-dark);">
+            <h4 style="margin-bottom:24px;">Send Us a Message</h4>
+            <form>
+                <div class="form-group"><label class="form-label">Your Name</label><input type="text" class="form-control" placeholder="Full name"></div>
+                <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" placeholder="your@email.com"></div>
+                <div class="form-group"><label class="form-label">Message</label><textarea class="form-control" rows="4" placeholder="How can we help?"></textarea></div>
+                <button type="submit" class="btn btn-primary-lux">Send Message</button>
+            </form>
+        </div>
+        <div>
+            {% for icon, title, value in [('📧','Email','support@gemaura.com'),('📞','Phone','+91 98765 43210'),('📍','Address','Mumbai, Maharashtra, India'),('🕐','Hours','Mon–Sat: 9am – 6pm IST')] %}
+            <div style="display:flex;gap:16px;padding:20px 0;border-bottom:1px solid var(--beige-dark);">
+                <span style="font-size:24px;">{{ icon }}</span>
+                <div>
+                    <div style="font-weight:600;margin-bottom:4px;">{{ title }}</div>
+                    <div style="color:var(--text-light);font-size:14px;">{{ value }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

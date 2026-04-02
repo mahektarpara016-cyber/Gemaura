@@ -1,0 +1,39 @@
+{% extends 'layout/base_user.html' %}
+{% block title %}About Us - Gemaura{% endblock %}
+{% block content %}
+<section class="section" style="background:linear-gradient(135deg,#1A1208 0%,#3D2E10 100%);padding:100px 0;">
+    <div class="container" style="text-align:center;color:white;">
+        <div class="section-label" style="color:var(--gold);">Our Story</div>
+        <h1 style="color:white;font-size:56px;margin:16px 0;">About Gemaura</h1>
+        <p style="color:rgba(255,255,255,0.7);max-width:600px;margin:0 auto;font-size:18px;">
+            Born from a love of fine jewellery and a passion for empowering artisans, Gemaura connects skilled jewellery makers with customers who appreciate beauty and craftsmanship.
+        </p>
+    </div>
+</section>
+<section class="section">
+    <div class="container">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;margin-bottom:80px;">
+            <div>
+                <div class="section-label">Who We Are</div>
+                <h2>India's Premier Multi-Vendor Jewellery Platform</h2>
+                <div class="divider" style="margin:16px 0;"></div>
+                <p style="color:var(--text-light);line-height:1.9;margin-bottom:20px;">We are a curated marketplace that brings together the finest jewellery artisans and designers from across India, offering an unparalleled collection of rings, necklaces, earrings, bangles, and bracelets.</p>
+                <p style="color:var(--text-light);line-height:1.9;">Every piece on Gemaura is crafted with love, care, and the highest standards of quality — from delicate everyday wear to stunning bridal collections.</p>
+            </div>
+            <div style="background:var(--beige-dark);border-radius:var(--radius-lg);padding:48px;text-align:center;">
+                <div style="font-size:80px;">💍</div>
+                <h3 style="margin-top:16px;">Trusted by thousands</h3>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px;text-align:center;">
+            {% for n,lbl,desc in [('500+','Verified Sellers','Artisans from across India'),('50,000+','Happy Customers','And counting every day'),('100%','Authentic','Certified genuine jewellery')] %}
+            <div style="background:var(--white);border-radius:var(--radius);padding:40px;box-shadow:var(--shadow);border:1px solid var(--beige-dark);">
+                <div style="font-family:'Cormorant Garamond',serif;font-size:52px;color:var(--gold-dark);font-weight:600;">{{ n }}</div>
+                <h4 style="font-size:20px;margin:8px 0;">{{ lbl }}</h4>
+                <p style="color:var(--text-light);font-size:14px;">{{ desc }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

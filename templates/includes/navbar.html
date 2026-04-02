@@ -1,0 +1,87 @@
+<!-- Announcement Bar -->
+<div class="announcement-bar">
+    <div class="container">
+        <p>✨ Free Shipping on orders over ₹5,000 | Use code <strong>GEMAURA10</strong> for 10% off</p>
+    </div>
+</div>
+
+<!-- Header / Navbar -->
+<header class="main-header">
+    <nav class="navbar">
+        <div class="container nav-content">
+            <!-- Left: Logo -->
+            <a href="{{ url_for('user.index') }}" class="navbar-logo">
+                <i class="fas fa-gem diamond-icon"></i>
+                <span>GEMAURA</span>
+            </a>
+
+            <!-- Center: Search Bar -->
+            <div class="navbar-search">
+                <form action="{{ url_for('user.shop') }}" method="GET">
+                    <input type="text" name="q" id="search-input" placeholder="Search for jewellery..." value="{{ request.args.get('q','') }}" autocomplete="off">
+                </form>
+                <div id="search-suggestions" class="search-suggestions"></div>
+            </div>
+
+            <!-- Right: Links + Icons + Profile -->
+            <div class="nav-right-group">
+                <nav class="nav-links">
+                    <a href="{{ url_for('user.index') }}" class="{% if request.endpoint == 'user.index' %}active{% endif %}">Home</a>
+                    <a href="{{ url_for('user.shop') }}" class="{% if request.endpoint == 'user.shop' %}active{% endif %}">Shop</a>
+                    <a href="{{ url_for('user.reels') }}" class="{% if request.endpoint == 'user.reels' %}active{% endif %}">Reels</a>
+                    <a href="{{ url_for('user.about') }}" class="{% if request.endpoint == 'user.about' %}active{% endif %}">Our Story</a>
+                </nav>
+
+                <div class="nav-icons">
+                    <a href="{{ url_for('user.wishlist') }}" title="Wishlist" class="nav-icon-link">
+                        <i class="far fa-heart"></i>
+                        {% if session.get('user_id') and nav_counts.wishlist > 0 %}<span class="badge">{{ nav_counts.wishlist }}</span>{% endif %}
+                    </a>
+                    <a href="{{ url_for('user.cart') }}" title="Cart" class="nav-icon-link">
+                        <i class="fas fa-shopping-bag"></i>
+                        {% if session.get('user_id') and nav_counts.cart > 0 %}<span class="badge">{{ nav_counts.cart }}</span>{% endif %}
+                    </a>
+                    
+                    <div class="profile-dropdown-wrapper">
+                        {% if session.get('user_id') and current_user %}
+                            {% if session.get('role') == 'seller' %}
+                                {% set p_img = current_user.logo %}
+                            {% else %}
+                                {% set p_img = current_user.profile_image %}
+                            {% endif %}
+                            {% set p_letter = (current_user.shop_name[0] if session.get('role') == 'seller' else current_user.name[0]) | upper %}
+                            {% set p_color = current_user.avatar_color %}
+
+                            <a href="javascript:void(0)" class="profile-avatar-trigger" id="profile-icon-btn">
+                                {% if p_img %}
+                                    <img src="{{ url_for('static', filename='uploads/profiles/' + p_img) }}" class="profile-avatar" alt="P">
+                                {% else %}
+                                    <div class="profile-avatar" style="background: {{ p_color or '#D4AF37' }};">{{ p_letter }}</div>
+                                {% endif %}
+                            </a>
+
+                            <div class="user-dropdown-menu" id="user-dropdown-menu">
+                                <div class="dropdown-header">Hello, {{ session.get('name', 'User') }}</div>
+                                <a href="{{ url_for('user.profile') }}"><i class="far fa-user"></i> My Profile</a>
+                                {% if session.get('role') == 'admin' %}
+                                <a href="{{ url_for('admin.dashboard') }}" style="color:#D4AF37;"><i class="fas fa-user-shield"></i> Admin Panel</a>
+                                {% elif session.get('role') == 'seller' %}
+                                <a href="{{ url_for('seller.dashboard') }}" style="color:#D4AF37;"><i class="fas fa-store"></i> Seller Panel</a>
+                                {% endif %}
+                                <a href="{{ url_for('user.orders') }}"><i class="fas fa-box"></i> My Orders</a>
+                                <a href="{{ url_for('user.logout') }}" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            </div>
+                        {% else %}
+                            <a href="{{ url_for('user.login') }}" class="profile-avatar-trigger"><i class="far fa-user"></i></a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Mobile Menu Toggle -->
+                    <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle Menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>
