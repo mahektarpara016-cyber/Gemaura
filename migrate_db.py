@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-db_path = 'e:/Gemaura/instance/gemaura.db'
+db_path = 'e:/Gemaura/gemaura.db'
 if not os.path.exists(db_path):
     print(f"Database not found at {db_path}")
     exit()

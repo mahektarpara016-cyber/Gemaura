@@ -372,7 +372,7 @@ def auto_generate_products(category_id):
         
         # Handle Image Copy
         src_img = os.path.join(base_image_dir, f"{i+1}.jpg")
-        img_filename = f"products/{cat_key}_{uuid.uuid4().hex[:8]}.jpg"
+        img_filename = os.path.join('products', f"{cat_key}_{uuid.uuid4().hex[:8]}.jpg")
         dest_img = os.path.join(dest_dir, img_filename)
         
         if os.path.exists(src_img):
@@ -515,7 +515,7 @@ def profile():
             if 'logo' in request.files:
                 file = request.files['logo']
                 if file and file.filename and allowed_file(file.filename):
-                    upload_path = os.path.join(current_app.root_path, 'static/uploads/profiles')
+                    upload_path = os.path.join(current_app.root_path, 'static', 'uploads', 'profiles')
                     os.makedirs(upload_path, exist_ok=True)
                     filename = secure_filename(f"seller_{seller.seller_id}_{file.filename}")
                     file.save(os.path.join(upload_path, filename))

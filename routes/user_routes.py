@@ -15,21 +15,9 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated
 
-@user_bp.app_context_processor
-def inject_user_data():
-    data = {'nav_counts': {'wishlist': 0, 'cart': 0}, 'current_user': None}
-    if 'user_id' in session:
-        role = session.get('role')
-        if role == 'user' or role == 'admin':
-            data['current_user'] = User.query.get(session['user_id'])
-        elif role == 'seller':
-            data['current_user'] = Seller.query.get(session['user_id'])
-            
-        data['nav_counts']['wishlist'] = Wishlist.query.filter_by(user_id=session['user_id']).count()
-        data['nav_counts']['cart'] = Cart.query.filter_by(user_id=session['user_id']).count()
-    return data
 
 @user_bp.route('/')
+
 def index():
     categories = Category.query.all()
     featured = Product.query.order_by(Product.created_at.desc()).limit(8).all()

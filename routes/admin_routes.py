@@ -143,7 +143,7 @@ def profile():
             if 'profile_image' in request.files:
                 file = request.files['profile_image']
                 if file and file.filename and allowed_file(file.filename):
-                    upload_path = os.path.join(current_app.root_path, 'static/uploads/profiles')
+                    upload_path = os.path.join(current_app.root_path, 'static', 'uploads', 'profiles')
                     os.makedirs(upload_path, exist_ok=True)
                     filename = secure_filename(f"admin_{user.user_id}_{file.filename}")
                     file.save(os.path.join(upload_path, filename))
@@ -288,8 +288,9 @@ def delete_reel(reel_id):
 # ---- Auth ----
 @admin_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    if 'admin_id' in session:
+    if session.get('role') == 'admin':
         return redirect(url_for('admin.dashboard'))
+
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')

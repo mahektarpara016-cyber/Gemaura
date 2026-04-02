@@ -15,13 +15,27 @@ def create_app():
     from routes.admin_routes import admin_bp
 
     # Register Blueprints
-app.register_blueprint(user_bp)
-app.register_blueprint(seller_bp, url_prefix='/seller')
-app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(user_bp)
+    app.register_blueprint(seller_bp, url_prefix='/seller')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
 
-# FIXED DATABASE CREATION
-with app.app_context():
-    db.create_all()
+    # ENSURE DATABASE FOLDER IS WRITABLE (for Render readiness)
+    import os
+    db_path = app.config.get('SQLALCHEMY_DATABASE_URI')
+    if db_path and db_path.startswith('sqlite:///'):
+        # Extract file path from sqlite:///
+        actual_path = db_path.replace('sqlite://///', '/').replace('sqlite:///', '')
+        db_dir = os.path.dirname(actual_path)
+        if db_dir and not os.path.exists(db_dir):
+            try:
+                os.makedirs(db_dir, exist_ok=True)
+            except Exception:
+                pass
+
+    # FIXED DATABASE CREATION
+    with app.app_context():
+        db.create_all()
+
 
     # ---- Context Processor: inject current_user, current_seller, nav_counts ----
     @app.context_processor
@@ -45,10 +59,14 @@ with app.app_context():
         elif role == 'seller':
             seller_id = session.get('seller_id')
             if seller_id:
-                current_seller = Seller.query.get(seller_id)
+                current_seller = Seller.query.get(session.get('seller_id')) # Fix: was current_seller = Seller.query.get(seller_id)
                 current_user = current_seller
 
         return dict(current_user=current_user, current_seller=current_seller, nav_counts=nav_counts)
+
+    # WhiteNoise for Static Files (Production)
+    from whitenoise import WhiteNoise
+    app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/', prefix='static/')
 
     @app.errorhandler(404)
     def page_not_found(e):
@@ -63,9 +81,16 @@ with app.app_context():
     def favicon():
         return app.send_static_file('favicon.ico')
 
+    @app.route('/static/uploads/<path:filename>')
+    def uploaded_file(filename):
+        from flask import send_from_directory
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
     return app
+
 
 app = create_app()
 
 if __name__ == '__main__':
     app.run(debug=True)
+
