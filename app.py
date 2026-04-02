@@ -15,12 +15,13 @@ def create_app():
     from routes.admin_routes import admin_bp
 
     # Register Blueprints
-    app.register_blueprint(user_bp)
-    app.register_blueprint(seller_bp, url_prefix='/seller')
-    app.register_blueprint(admin_bp, url_prefix='/admin')
+app.register_blueprint(user_bp)
+app.register_blueprint(seller_bp, url_prefix='/seller')
+app.register_blueprint(admin_bp, url_prefix='/admin')
 
-    with app.app_context():
-        db.create_all()
+# FIXED DATABASE CREATION
+with app.app_context():
+    db.create_all()
 
     # ---- Context Processor: inject current_user, current_seller, nav_counts ----
     @app.context_processor
