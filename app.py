@@ -1,4 +1,4 @@
-from flask import Flask, render_template, session
+from flask import Flask, session
 from config import Config
 from database.models import db
 
@@ -6,7 +6,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # ✅ SHOW REAL ERRORS (important for debugging on Render)
+    # ✅ Show real errors
     app.config['PROPAGATE_EXCEPTIONS'] = True
 
     db.init_app(app)
@@ -21,39 +21,47 @@ def create_app():
     app.register_blueprint(seller_bp, url_prefix='/seller')
     app.register_blueprint(admin_bp, url_prefix='/admin')
 
-    # ✅ CREATE DATABASE + DEFAULT DATA
+    # ✅ DATABASE SETUP (FIXED)
     with app.app_context():
         import os
 
-        # Ensure upload folder exists
-        if not os.path.exists(app.config['UPLOAD_FOLDER']):
-            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        # Import ALL models
+        from database import models
+        from database.models import Category
+
+        # Create upload folder
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+        # Fix SQLite path
+        db_uri = app.config['SQLALCHEMY_DATABASE_URI']
+        if db_uri.startswith("sqlite:///"):
+            db_path = db_uri.replace("sqlite:///", "")
+            db_dir = os.path.dirname(db_path)
+            os.makedirs(db_dir, exist_ok=True)
 
         # Create tables
         db.create_all()
+        print("✅ Database created")
 
-        # ✅ Insert default categories (fix your error)
+        # Insert default categories
         try:
-            from database.models import Category
-
             if Category.query.count() == 0:
-                default_categories = [
+                db.session.add_all([
                     Category(category_name="Rings", image="default.jpg"),
                     Category(category_name="Necklaces", image="default.jpg"),
                     Category(category_name="Bracelets", image="default.jpg"),
                     Category(category_name="Earrings", image="default.jpg")
-                ]
-
-                db.session.add_all(default_categories)
+                ])
                 db.session.commit()
-
+                print("✅ Default categories added")
         except Exception as e:
-            print("Category insert error:", e)
+            print("Category error:", e)
 
     # ✅ Context Processor
     @app.context_processor
     def inject_globals():
         from database.models import User, Seller, Cart, Wishlist
+
         current_user = None
         current_seller = None
         nav_counts = {'cart': 0, 'wishlist': 0}
@@ -61,22 +69,21 @@ def create_app():
         role = session.get('role')
         user_id = session.get('user_id')
 
-        if role in ['admin', 'user']:
-            if user_id:
-                current_user = User.query.get(user_id)
+        if role in ['admin', 'user'] and user_id:
+            current_user = User.query.get(user_id)
 
-                if role == 'user':
-                    try:
-                        nav_counts['cart'] = Cart.query.filter_by(
-                            user_id=user_id,
-                            is_saved_for_later=False
-                        ).count()
+            if role == 'user':
+                try:
+                    nav_counts['cart'] = Cart.query.filter_by(
+                        user_id=user_id,
+                        is_saved_for_later=False
+                    ).count()
 
-                        nav_counts['wishlist'] = Wishlist.query.filter_by(
-                            user_id=user_id
-                        ).count()
-                    except:
-                        pass
+                    nav_counts['wishlist'] = Wishlist.query.filter_by(
+                        user_id=user_id
+                    ).count()
+                except:
+                    pass
 
         elif role == 'seller':
             seller_id = session.get('seller_id')
@@ -90,17 +97,17 @@ def create_app():
             nav_counts=nav_counts
         )
 
-    # ✅ STATIC FILES FIX (for Render)
+    # ✅ Static files fix
     from whitenoise import WhiteNoise
     app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/', prefix='static/')
 
-    # ✅ ROUTE FOR UPLOADED IMAGES
+    # ✅ Uploaded images route
     @app.route('/static/uploads/<path:filename>')
     def uploaded_file(filename):
         from flask import send_from_directory
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-    # ERROR HANDLERS
+    # Error handlers
     @app.errorhandler(404)
     def page_not_found(e):
         return "404 Not Found", 404
